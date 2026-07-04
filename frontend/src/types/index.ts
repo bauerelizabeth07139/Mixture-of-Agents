@@ -9,3 +9,35 @@ export interface SubAgent { id: string; name: string; modelId: string; status: s
 export interface SubAgentTask { id: string; description: string; assignedModel: string; status: string; result?: string; error?: string; attempts: number; }
 export interface Issue { id: string; agentId: string; description: string; severity: string; timestamp: string; }
 export interface AgentSummary { id: string; name: string; modelId: string; taskDescription: string; outcome: string; summary: string; timestamp: string; }
+
+export interface McpServerConfig {
+  id: string; name: string; description: string;
+  transport: 'stdio' | 'sse' | 'streamable-http';
+  command?: string; args?: string[]; env?: Record<string, string>;
+  url?: string;
+  enabled: boolean; category: string; icon: string;
+  createdAt: string; updatedAt: string;
+}
+
+export interface SkillConfig {
+  id: string; name: string; description: string;
+  category: string; source: 'builtin' | 'file' | 'url';
+  sourcePath?: string; sourceUrl?: string;
+  content: string;
+  enabled: boolean; icon: string;
+  triggerKeywords?: string[];
+  createdAt: string; updatedAt: string;
+}
+
+export interface McpPreset {
+  id: string; name: string; description: string;
+  transport: string; command?: string; args?: string[];
+  env?: Record<string, string>; url?: string;
+  category: string; icon: string; npmPackage?: string;
+}
+
+export interface SkillPreset {
+  id: string; name: string; description: string;
+  category: string; icon: string; content: string;
+}
+

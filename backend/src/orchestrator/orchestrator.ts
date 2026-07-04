@@ -6,6 +6,7 @@ import { ModelCapabilityScorer } from '../models/capability-scorer';
 import { CodingEngine } from '../services/coding-engine';
 import { ORCHESTRATOR_SYSTEM_PROMPT, SUBAGENT_SYSTEM_PROMPT, CODING_SUBAGENT_PROMPT, buildThinkingPrefix, buildDecompositionPrompt, buildFailureEvalPrompt, buildAggregationPrompt } from './prompts';
 import os from 'os';
+import { ExtensionManager } from '../services/extensions/extension-manager';
 import path from 'path';
 
 export type OrchestratorEventCallback = (event: string, data: any) => void;
@@ -17,12 +18,14 @@ export class Orchestrator {
   private eventCallback: OrchestratorEventCallback | null = null;
   private abortController: AbortController | null = null;
   private codingEngine: CodingEngine;
+  private extensionManager: ExtensionManager | null;
 
-  constructor(project: Project, poolManager: ApiPoolManager, preferences: UserPreferences) {
+  constructor(project: Project, poolManager: ApiPoolManager, preferences: UserPreferences, extensionManager?: ExtensionManager) {
     this.project = project;
     this.poolManager = poolManager;
     this.preferences = preferences;
     this.codingEngine = new CodingEngine(path.join(os.tmpdir(), 'moa-workspace'));
+    this.extensionManager = extensionManager || null;
   }
 
   onEvent(cb: OrchestratorEventCallback) { this.eventCallback = cb; }
@@ -198,6 +201,12 @@ export class Orchestrator {
     const issues = this.project.issueLibrary.filter(i => !i.resolved).slice(-10);
     const done = this.project.completedAgents.slice(-5);
     let ctx = '';
+    if (this.extensionManager) {
+      const mcpCtx = this.extensionManager.buildMcpContext();
+      if (mcpCtx) ctx += mcpCtx;
+      const skillCtx = this.extensionManager.buildSkillContext();
+      if (skillCtx) ctx += skillCtx;
+    }
     if (issues.length) { ctx += 'Known issues:\n'; issues.forEach(i => ctx += '- [' + i.severity + '] ' + i.description + '\n'); }
     if (done.length) { ctx += 'Recent work:\n'; done.forEach(a => ctx += '- ' + a.name + ': ' + a.summary + '\n'); }
     return ctx;

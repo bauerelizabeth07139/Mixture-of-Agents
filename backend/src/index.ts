@@ -10,6 +10,8 @@ import { createProjectRoutes } from './routes/projects';
 import { createModelRoutes } from './routes/models';
 import { createTestingRoutes } from './routes/testing';
 import { createCodingRoutes } from './routes/coding';
+import { createExtensionRoutes } from './routes/extensions';
+import { ExtensionManager } from './services/extensions/extension-manager';
 
 const app = express();
 const server = createServer(app);
@@ -20,13 +22,15 @@ app.use(express.json({ limit: '10mb' }));
 const poolManager = new ApiPoolManager();
 const projectManager = new ProjectManager();
 const wsManager = new WSManager();
+const extManager = new ExtensionManager();
 wss.on('connection', (ws) => { wsManager.addClient(ws); });
 
 app.use('/api/providers', createProviderRoutes(poolManager));
-app.use('/api/projects', createProjectRoutes(projectManager, poolManager, wsManager.broadcast.bind(wsManager)));
+app.use('/api/projects', createProjectRoutes(projectManager, poolManager, wsManager.broadcast.bind(wsManager), extManager));
 app.use('/api/models', createModelRoutes(poolManager));
 app.use('/api/testing', createTestingRoutes(poolManager, wsManager.broadcast.bind(wsManager)));
 app.use('/api/coding', createCodingRoutes(poolManager, wsManager.broadcast.bind(wsManager)));
+app.use('/api/extensions', createExtensionRoutes(extManager));
 app.get('/api/health', (_req, res) => { res.json({ status: 'ok', providers: poolManager.getAllProviders().length, ws: wsManager.getClientCount() }); });
 
 const PORT = process.env.PORT || 3001;

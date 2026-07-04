@@ -425,8 +425,279 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
 }
 
 
+
+// ─── Extensions Panel (MCP + Skills) ───
+function ExtensionsPanel() {
+  const [subTab, setSubTab] = useState<'mcp' | 'skills'>('mcp');
+  const [mcpServers, setMcpServers] = useState<any[]>([]);
+  const [mcpPresets, setMcpPresets] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [skillPresets, setSkillPresets] = useState<any[]>([]);
+  const [showAddMcp, setShowAddMcp] = useState(false);
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [customMcp, setCustomMcp] = useState({ name: '', description: '', transport: 'stdio' as string, command: '', args: '', url: '', category: '自定义', icon: '🔧' });
+  const [customSkill, setCustomSkill] = useState({ name: '', description: '', content: '', category: '自定义', icon: '🔧' });
+  const [editingSkill, setEditingSkill] = useState<any>(null);
+
+  const loadAll = useCallback(async () => {
+    const [mp, sp] = await Promise.all([api.fetchMcpPresets(), api.fetchSkillPresets()]);
+    setMcpPresets(mp); setSkillPresets(sp);
+    try {
+      const [ms, sk] = await Promise.all([api.fetchMcpServers(), api.fetchSkills()]);
+      setMcpServers(ms); setSkills(sk);
+    } catch {}
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const addMcpPreset = async (presetId: string) => {
+    await api.addMcpFromPreset(presetId);
+    await loadAll();
+  };
+
+  const addMcpCustom = async () => {
+    if (!customMcp.name) return;
+    await api.addMcpCustom({
+      name: customMcp.name, description: customMcp.description, transport: customMcp.transport,
+      command: customMcp.command || undefined, args: customMcp.args ? customMcp.args.split(' ').filter(Boolean) : undefined,
+      url: customMcp.url || undefined, enabled: true, category: customMcp.category, icon: customMcp.icon,
+    });
+    setCustomMcp({ name: '', description: '', transport: 'stdio', command: '', args: '', url: '', category: '自定义', icon: '🔧' });
+    setShowAddMcp(false);
+    await loadAll();
+  };
+
+  const toggleMcp = async (id: string, enabled: boolean) => {
+    await api.updateMcp(id, { enabled });
+    await loadAll();
+  };
+
+  const removeMcp = async (id: string) => {
+    await api.removeMcp(id);
+    await loadAll();
+  };
+
+  const addSkillPreset = async (presetId: string) => {
+    await api.addSkillFromPreset(presetId);
+    await loadAll();
+  };
+
+  const addSkillCustom = async () => {
+    if (!customSkill.name || !customSkill.content) return;
+    await api.addSkillCustom({
+      name: customSkill.name, description: customSkill.description, content: customSkill.content,
+      source: 'file', enabled: true, category: customSkill.category, icon: customSkill.icon,
+    });
+    setCustomSkill({ name: '', description: '', content: '', category: '自定义', icon: '🔧' });
+    setShowAddSkill(false);
+    await loadAll();
+  };
+
+  const toggleSkill = async (id: string, enabled: boolean) => {
+    await api.updateSkill(id, { enabled });
+    await loadAll();
+  };
+
+  const removeSkill = async (id: string) => {
+    await api.removeSkill(id);
+    await loadAll();
+  };
+
+  const updateSkillContent = async () => {
+    if (!editingSkill) return;
+    await api.updateSkill(editingSkill.id, { content: editingSkill.content, name: editingSkill.name, description: editingSkill.description });
+    setEditingSkill(null);
+    await loadAll();
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
+        <button className={`btn ${subTab === 'mcp' ? 'btn-primary' : ''}`} onClick={() => setSubTab('mcp')} style={{ borderRadius: '6px 6px 0 0', borderBottom: subTab === 'mcp' ? '2px solid var(--accent)' : 'none' }}>🔌 MCP 服务器</button>
+        <button className={`btn ${subTab === 'skills' ? 'btn-primary' : ''}`} onClick={() => setSubTab('skills')} style={{ borderRadius: '6px 6px 0 0', borderBottom: subTab === 'skills' ? '2px solid var(--accent)' : 'none' }}>⚡ 技能库</button>
+      </div>
+
+      {/* MCP Servers Tab */}
+      {subTab === 'mcp' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>🔌 MCP 服务器管理</h3>
+            <button className="btn btn-primary" onClick={() => setShowAddMcp(!showAddMcp)}>+ 添加服务器</button>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+            MCP (Model Context Protocol) 服务器为AI提供外部工具能力。选择预设快速添加，或自定义配置。
+          </p>
+
+          {showAddMcp && (
+            <div className="card" style={{ marginBottom: 16, border: '1px solid var(--accent)' }}>
+              <div className="card-title">添加自定义MCP服务器</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <input placeholder="名称" value={customMcp.name} onChange={e => setCustomMcp({...customMcp, name: e.target.value})} />
+                <input placeholder="图标 (emoji)" value={customMcp.icon} onChange={e => setCustomMcp({...customMcp, icon: e.target.value})} />
+              </div>
+              <input placeholder="描述" value={customMcp.description} onChange={e => setCustomMcp({...customMcp, description: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <select value={customMcp.transport} onChange={e => setCustomMcp({...customMcp, transport: e.target.value})}>
+                  <option value="stdio">stdio</option>
+                  <option value="sse">SSE</option>
+                  <option value="streamable-http">Streamable HTTP</option>
+                </select>
+                <input placeholder="分类" value={customMcp.category} onChange={e => setCustomMcp({...customMcp, category: e.target.value})} />
+              </div>
+              {customMcp.transport === 'stdio' ? (
+                <>
+                  <input placeholder="命令 (如 npx)" value={customMcp.command} onChange={e => setCustomMcp({...customMcp, command: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+                  <input placeholder="参数 (空格分隔)" value={customMcp.args} onChange={e => setCustomMcp({...customMcp, args: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+                </>
+              ) : (
+                <input placeholder="URL" value={customMcp.url} onChange={e => setCustomMcp({...customMcp, url: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              )}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn" onClick={() => setShowAddMcp(false)}>取消</button>
+                <button className="btn btn-primary" onClick={addMcpCustom}>添加</button>
+              </div>
+            </div>
+          )}
+
+          {/* Preset Grid */}
+          <h4 style={{ marginBottom: 12 }}>📦 预设MCP服务器</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 24 }}>
+            {mcpPresets.map((p: any) => {
+              const added = mcpServers.some((s: any) => s.name === p.name);
+              return (
+                <div key={p.id} className="card" style={{ cursor: added ? 'default' : 'pointer', opacity: added ? 0.5 : 1 }}
+                  onClick={() => !added && addMcpPreset(p.id)}>
+                  <div className="card-title">{p.icon} {p.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>{p.description}</div>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <span className="badge badge-info">{p.transport}</span>
+                    <span className="badge badge-info">{p.category}</span>
+                    {p.npmPackage && <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{p.npmPackage}</span>}
+                    {added && <span style={{ marginLeft: 'auto', color: 'var(--success)', fontSize: 11 }}>✅ 已添加</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Active MCP Servers */}
+          {mcpServers.length > 0 && (
+            <>
+              <h4 style={{ marginBottom: 12 }}>⚙️ 已配置的MCP服务器</h4>
+              {mcpServers.map((s: any) => (
+                <div key={s.id} className="card" style={{ marginBottom: 8, opacity: s.enabled ? 1 : 0.5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{s.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{s.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.description}</div>
+                      <div style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-secondary)', marginTop: 4 }}>
+                        {s.transport === 'stdio' ? `${s.command} ${(s.args || []).join(' ')}` : s.url}
+                      </div>
+                    </div>
+                    <span className={`badge ${s.enabled ? 'badge-success' : 'badge-error'}`}>{s.enabled ? '启用' : '禁用'}</span>
+                    <button className="btn btn-sm" onClick={() => toggleMcp(s.id, !s.enabled)}>{s.enabled ? '禁用' : '启用'}</button>
+                    <button className="btn btn-sm" onClick={() => removeMcp(s.id)} style={{ color: 'var(--error)' }}>删除</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Skills Tab */}
+      {subTab === 'skills' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>⚡ 技能库管理</h3>
+            <button className="btn btn-primary" onClick={() => setShowAddSkill(!showAddSkill)}>+ 添加技能</button>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+            技能(Skill)定义了AI的专业能力和行为规范。可从预设选择或自定义创建，激活后自动注入到调度引擎上下文中。
+          </p>
+
+          {showAddSkill && (
+            <div className="card" style={{ marginBottom: 16, border: '1px solid var(--accent)' }}>
+              <div className="card-title">创建自定义技能</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <input placeholder="技能名称" value={customSkill.name} onChange={e => setCustomSkill({...customSkill, name: e.target.value})} />
+                <input placeholder="图标" value={customSkill.icon} onChange={e => setCustomSkill({...customSkill, icon: e.target.value})} />
+              </div>
+              <input placeholder="描述" value={customSkill.description} onChange={e => setCustomSkill({...customSkill, description: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              <input placeholder="分类" value={customSkill.category} onChange={e => setCustomSkill({...customSkill, category: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              <textarea placeholder="技能内容/系统提示词..." value={customSkill.content} onChange={e => setCustomSkill({...customSkill, content: e.target.value})} style={{ width: '100%', minHeight: 120, marginBottom: 8 }} rows={5} />
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn" onClick={() => setShowAddSkill(false)}>取消</button>
+                <button className="btn btn-primary" onClick={addSkillCustom}>创建</button>
+              </div>
+            </div>
+          )}
+
+          {editingSkill && (
+            <div className="card" style={{ marginBottom: 16, border: '1px solid var(--warning)' }}>
+              <div className="card-title">编辑技能: {editingSkill.icon} {editingSkill.name}</div>
+              <input placeholder="名称" value={editingSkill.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingSkill({...editingSkill, name: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              <input placeholder="描述" value={editingSkill.description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingSkill({...editingSkill, description: e.target.value})} style={{ width: '100%', marginBottom: 8 }} />
+              <textarea value={editingSkill.content} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditingSkill({...editingSkill, content: e.target.value})} style={{ width: '100%', minHeight: 150, marginBottom: 8 }} rows={6} />
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn" onClick={() => setEditingSkill(null)}>取消</button>
+                <button className="btn btn-primary" onClick={updateSkillContent}>保存</button>
+              </div>
+            </div>
+          )}
+
+          {/* Preset Skills */}
+          <h4 style={{ marginBottom: 12 }}>📦 预设技能</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 24 }}>
+            {skillPresets.map((p: any) => {
+              const added = skills.some((s: any) => s.name === p.name);
+              return (
+                <div key={p.id} className="card" style={{ cursor: added ? 'default' : 'pointer', opacity: added ? 0.5 : 1 }}
+                  onClick={() => !added && addSkillPreset(p.id)}>
+                  <div className="card-title">{p.icon} {p.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>{p.description}</div>
+                  <span className="badge badge-info">{p.category}</span>
+                  {added && <span style={{ marginLeft: 8, color: 'var(--success)', fontSize: 11 }}>✅ 已添加</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Active Skills */}
+          {skills.length > 0 && (
+            <>
+              <h4 style={{ marginBottom: 12 }}>⚡ 已配置的技能</h4>
+              {skills.map((s: any) => (
+                <div key={s.id} className="card" style={{ marginBottom: 8, opacity: s.enabled ? 1 : 0.5 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{s.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{s.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8 }}>{s.description}</div>
+                      <details>
+                        <summary style={{ fontSize: 11, cursor: 'pointer', color: 'var(--accent)' }}>查看内容</summary>
+                        <pre style={{ fontSize: 11, padding: 8, background: 'var(--bg-tertiary)', borderRadius: 6, whiteSpace: 'pre-wrap', marginTop: 4, maxHeight: 200, overflow: 'auto' }}>{s.content}</pre>
+                      </details>
+                    </div>
+                    <span className={`badge ${s.enabled ? 'badge-success' : 'badge-error'}`}>{s.enabled ? '启用' : '禁用'}</span>
+                    <button className="btn btn-sm" onClick={() => setEditingSkill(s)}>编辑</button>
+                    <button className="btn btn-sm" onClick={() => toggleSkill(s.id, !s.enabled)}>{s.enabled ? '禁用' : '启用'}</button>
+                    <button className="btn btn-sm" onClick={() => removeSkill(s.id)} style={{ color: 'var(--error)' }}>删除</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function App() {
-  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor' | 'testing' >('task');
+  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor' | 'testing' | 'extensions'>('task');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string; time: string }>>([]);
@@ -464,7 +735,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ padding: 8 }}>
-          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'},{k:'testing',l:'🧪 测试',i:'testing'}].map(t => (
+          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'},{k:'testing',l:'🧪 测试',i:'testing'},{k:'extensions',l:'🔌 扩展',i:'extensions'}].map(t => (
             <div key={t.k} className={`tab ${tab === t.k ? 'active' : ''}`} onClick={() => setTab(t.k as any)}>{t.l}</div>
           ))}
         </div>
@@ -479,13 +750,14 @@ export default function App() {
         </div>
       </div>
       <div className="main-content">
-        <div className="header"><h1>{tab === 'task' ? '📝 新建任务' : tab === 'monitor' ? '🤖 子代理监控' : tab === 'providers' ? '📦 提供商管理' : tab === 'models' ? '🎯 模型能力' : '🧪 能力测试'}</h1></div>
+        <div className="header"><h1>{tab === 'task' ? '📝 新建任务' : tab === 'monitor' ? '🤖 子代理监控' : tab === 'providers' ? '📦 提供商管理' : tab === 'models' ? '🎯 模型能力' : tab === 'testing' ? '🧪 能力测试' : '🔌 扩展管理'}</h1></div>
         <div className="panel">
           {tab === 'task' && <TaskPanel providers={providers} onExecute={handleExecute} />}
           {tab === 'providers' && <ProviderSetup onRefresh={loadProviders} />}
           {tab === 'models' && <ModelCapabilities providers={providers} />}
           {tab === 'monitor' && <AgentMonitor project={project} />}
           {tab === 'testing' && <TestingPanel providers={providers} />}
+          {tab === 'extensions' && <ExtensionsPanel />}
         </div>
       </div>
     </div>

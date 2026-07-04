@@ -25,4 +25,18 @@ export const api = {
   fetchProjects: () => fetch(B+'/projects').then(r=>r.json()),
   createProject: (n: string, d: string, t: string, m: string) => fetch(B+'/projects',{method:'POST',headers:h,body:JSON.stringify({name:n,description:d,task:t,modelId:m})}).then(r=>r.json()),
   executeProject: (id: string, o: any) => fetch(B+'/projects/'+id+'/execute',{method:'POST',headers:h,body:JSON.stringify(o)}).then(r=>r.json()),
+  // Extensions - MCP Servers
+  fetchMcpServers: () => fetch(B+'/extensions/mcp').then(r=>r.json()),
+  fetchMcpPresets: () => fetch(B+'/extensions/mcp/presets').then(r=>r.json()),
+  addMcpFromPreset: (pid: string) => fetch(B+'/extensions/mcp/from-preset',{method:'POST',headers:h,body:JSON.stringify({presetId:pid})}).then(r=>r.json()),
+  addMcpCustom: (config: any) => fetch(B+'/extensions/mcp',{method:'POST',headers:h,body:JSON.stringify(config)}).then(r=>r.json()),
+  updateMcp: (id: string, updates: any) => fetch(B+'/extensions/mcp/'+id,{method:'PUT',headers:h,body:JSON.stringify(updates)}).then(r=>r.json()),
+  removeMcp: (id: string) => fetch(B+'/extensions/mcp/'+id,{method:'DELETE'}).then(r=>r.json()),
+  // Extensions - Skills
+  fetchSkills: () => fetch(B+'/extensions/skills').then(r=>r.json()),
+  fetchSkillPresets: () => fetch(B+'/extensions/skills/presets').then(r=>r.json()),
+  addSkillFromPreset: (pid: string) => fetch(B+'/extensions/skills/from-preset',{method:'POST',headers:h,body:JSON.stringify({presetId:pid})}).then(r=>r.json()),
+  addSkillCustom: (config: any) => fetch(B+'/extensions/skills',{method:'POST',headers:h,body:JSON.stringify(config)}).then(r=>r.json()),
+  updateSkill: (id: string, updates: any) => fetch(B+'/extensions/skills/'+id,{method:'PUT',headers:h,body:JSON.stringify(updates)}).then(r=>r.json()),
+  removeSkill: (id: string) => fetch(B+'/extensions/skills/'+id,{method:'DELETE'}).then(r=>r.json()),
 };

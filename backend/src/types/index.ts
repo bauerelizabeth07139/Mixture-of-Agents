@@ -1,4 +1,4 @@
-export type ModelCapability = 'code' | 'agent' | 'chat' | 'multimodal' | 'reasoning' | 'fast';
+﻿export type ModelCapability = 'code' | 'agent' | 'chat' | 'multimodal' | 'reasoning' | 'fast';
 
 export interface ModelCapabilityProfile {
   code: number; agent: number; chat: number; context: number; speed: number; multimodal: boolean;
@@ -78,4 +78,68 @@ export interface ChatMessage {
   id: string; role: 'user' | 'assistant' | 'system' | 'orchestrator' | 'agent';
   agentId?: string; content: string; timestamp: string;
   metadata?: { modelUsed?: string; tokensUsed?: number; cost?: number; };
+}
+
+// MCP Server configuration
+export interface McpServerConfig {
+  id: string;
+  name: string;
+  description: string;
+  transport: 'stdio' | 'sse' | 'streamable-http';
+  // stdio transport fields
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  // http/sse transport fields
+  url?: string;
+  // metadata
+  enabled: boolean;
+  category: string;
+  icon: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Skill configuration
+export interface SkillConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  // source: built-in, file, or url
+  source: 'builtin' | 'file' | 'url';
+  sourcePath?: string;
+  sourceUrl?: string;
+  // content
+  content: string;
+  // metadata
+  enabled: boolean;
+  icon: string;
+  triggerKeywords?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Preset catalog entry
+export interface McpPreset {
+  id: string;
+  name: string;
+  description: string;
+  transport: McpServerConfig['transport'];
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  category: string;
+  icon: string;
+  npmPackage?: string;
+}
+
+export interface SkillPreset {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  content: string;
 }
