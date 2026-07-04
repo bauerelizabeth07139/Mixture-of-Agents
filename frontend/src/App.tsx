@@ -424,102 +424,9 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
   );
 }
 
-// ─── Coding Panel ───
-function CodingPanel({ providers }: { providers: Provider[] }) {
-  const allModels = providers.flatMap(p => p.models.filter(m => m.type === 'llm').map(m => ({ ...m, pName: p.name, pIcon: p.icon, provId: p.id })));
-  const [description, setDescription] = useState('');
-  const [modelId, setModelId] = useState('');
-  const [projectPath, setProjectPath] = useState('');
-  const [executing, setExecuting] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [workspace, setWorkspace] = useState<any>(null);
-
-  const execute = async () => {
-    if (!description.trim()) return;
-    setExecuting(true); setResult(null);
-    try {
-      const model = allModels.find(m => m.id === modelId);
-      const r = await api.executeCoding(description, projectPath || undefined, modelId || undefined, model?.provId);
-      setResult(r);
-      // Refresh workspace
-      const ws = await api.getWorkspace();
-      setWorkspace(ws);
-    } catch (e: any) { alert('执行失败: ' + e.message); }
-    setExecuting(false);
-  };
-
-  const loadWorkspace = async () => {
-    try { const ws = await api.getWorkspace(); setWorkspace(ws); } catch {}
-  };
-
-  return (
-    <div>
-      <h3 style={{ marginBottom: 16 }}>💻 自动编程</h3>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-        类似 Codex/Trae 的自动化编程能力。描述你要构建的项目，AI会自动生成计划并执行文件创建、代码编写、依赖安装等操作。
-      </p>
-      <div className="form-group">
-        <label>编程任务描述</label>
-        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="例如：创建一个Express.js REST API，包含用户CRUD操作和SQLite数据库" rows={4} />
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-          <label>项目路径</label>
-          <input value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="my-project (可选)" />
-        </div>
-        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-          <label>使用模型</label>
-          <select value={modelId} onChange={e => setModelId(e.target.value)}>
-            <option value="">自动选择</option>
-            {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.modelId}</option>)}
-          </select>
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-primary" onClick={execute} disabled={!description.trim() || executing}>
-          {executing ? '⏳ 执行中...' : '🚀 开始编程'}
-        </button>
-        <button className="btn" onClick={loadWorkspace}>📁 查看工作区</button>
-      </div>
-
-      {executing && (
-        <div className="card mt-16" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16 }}>🤖 AI正在规划并执行编程任务...</div>
-          <div className="progress-bar mt-8"><div className="progress-fill" style={{ width: '70%', animation: 'pulse 1.5s infinite' }} /></div>
-        </div>
-      )}
-
-      {result && (
-        <div className="card mt-16">
-          <div className="card-title">📋 执行结果 <span className={`badge ${result.status === 'completed' ? 'badge-success' : 'badge-error'}`}>{result.status}</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>{result.description}</div>
-          {result.plan.map((step: any, i: number) => (
-            <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-              <span>{step.status === 'completed' ? '✅' : step.status === 'failed' ? '❌' : step.status === 'running' ? '⏳' : '⬜'}</span>
-              <span style={{ fontSize: 12, fontWeight: 600 }}>{step.action}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>{step.description}</span>
-            </div>
-          ))}
-          <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8, fontSize: 12, whiteSpace: 'pre-wrap', maxHeight: 300, overflow: 'auto' }}>{result.output}</div>
-        </div>
-      )}
-
-      {workspace && workspace.files && workspace.files.length > 0 && (
-        <div className="card mt-16">
-          <div className="card-title">📁 工作区文件</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>{workspace.workDir}</div>
-          {workspace.files.map((f: string, i: number) => (
-            <div key={i} style={{ padding: '4px 0', fontSize: 12, fontFamily: 'monospace' }}>📄 {f}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 export default function App() {
-  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor' | 'testing' | 'coding'>('task');
+  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor' | 'testing' >('task');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string; time: string }>>([]);
@@ -557,7 +464,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ padding: 8 }}>
-          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'},{k:'testing',l:'🧪 测试',i:'testing'},{k:'coding',l:'💻 编程',i:'coding'}].map(t => (
+          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'},{k:'testing',l:'🧪 测试',i:'testing'}].map(t => (
             <div key={t.k} className={`tab ${tab === t.k ? 'active' : ''}`} onClick={() => setTab(t.k as any)}>{t.l}</div>
           ))}
         </div>
@@ -572,14 +479,13 @@ export default function App() {
         </div>
       </div>
       <div className="main-content">
-        <div className="header"><h1>{tab === 'task' ? '📝 新建任务' : tab === 'monitor' ? '🤖 子代理监控' : tab === 'providers' ? '📦 提供商管理' : '🎯 模型能力'}</h1></div>
+        <div className="header"><h1>{tab === 'task' ? '📝 新建任务' : tab === 'monitor' ? '🤖 子代理监控' : tab === 'providers' ? '📦 提供商管理' : tab === 'models' ? '🎯 模型能力' : '🧪 能力测试'}</h1></div>
         <div className="panel">
           {tab === 'task' && <TaskPanel providers={providers} onExecute={handleExecute} />}
           {tab === 'providers' && <ProviderSetup onRefresh={loadProviders} />}
           {tab === 'models' && <ModelCapabilities providers={providers} />}
           {tab === 'monitor' && <AgentMonitor project={project} />}
           {tab === 'testing' && <TestingPanel providers={providers} />}
-          {tab === 'coding' && <CodingPanel providers={providers} />}
         </div>
       </div>
     </div>

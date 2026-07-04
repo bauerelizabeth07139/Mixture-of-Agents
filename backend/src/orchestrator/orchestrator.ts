@@ -3,7 +3,10 @@ import { Project, SubAgent, SubAgentTask, Model, Provider, UserPreferences } fro
 import { ApiPoolManager } from '../providers/api-pool';
 import { LLMClient, QuotaExhaustedError } from '../services/llm-client';
 import { ModelCapabilityScorer } from '../models/capability-scorer';
-import { ORCHESTRATOR_SYSTEM_PROMPT, SUBAGENT_SYSTEM_PROMPT, buildThinkingPrefix, buildDecompositionPrompt, buildFailureEvalPrompt, buildAggregationPrompt } from './prompts';
+import { CodingEngine } from '../services/coding-engine';
+import { ORCHESTRATOR_SYSTEM_PROMPT, SUBAGENT_SYSTEM_PROMPT, CODING_SUBAGENT_PROMPT, buildThinkingPrefix, buildDecompositionPrompt, buildFailureEvalPrompt, buildAggregationPrompt } from './prompts';
+import os from 'os';
+import path from 'path';
 
 export type OrchestratorEventCallback = (event: string, data: any) => void;
 
@@ -13,9 +16,13 @@ export class Orchestrator {
   private preferences: UserPreferences;
   private eventCallback: OrchestratorEventCallback | null = null;
   private abortController: AbortController | null = null;
+  private codingEngine: CodingEngine;
 
   constructor(project: Project, poolManager: ApiPoolManager, preferences: UserPreferences) {
-    this.project = project; this.poolManager = poolManager; this.preferences = preferences;
+    this.project = project;
+    this.poolManager = poolManager;
+    this.preferences = preferences;
+    this.codingEngine = new CodingEngine(path.join(os.tmpdir(), 'moa-workspace'));
   }
 
   onEvent(cb: OrchestratorEventCallback) { this.eventCallback = cb; }
@@ -28,7 +35,10 @@ export class Orchestrator {
     try {
       const subtasks = await this.decomposeTask();
       this.emit('orchestrator_update', { status: 'executing', subtasks: subtasks.length });
-      for (const st of subtasks) { if (this.abortController.signal.aborted) break; await this.executeSubtask(st); }
+      for (const st of subtasks) {
+        if (this.abortController.signal.aborted) break;
+        await this.executeSubtask(st);
+      }
       const result = await this.aggregateResults();
       this.project.orchestratorState.status = 'completed';
       this.emit('orchestrator_update', { status: 'completed', result });
@@ -51,14 +61,70 @@ export class Orchestrator {
     const task: SubAgentTask = { id: taskId, agentId: '', description: st.description, assignedModel: '', status: 'pending', attempts: 0, maxAttempts: 3, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     this.project.orchestratorState.tasks.push(task);
     this.emit('task_update', { task, pid: this.project.id });
+
     const sel = this.selectBestModel(st.taskType);
     if (!sel) { task.status = 'failed'; task.error = 'No model available'; this.addIssue('system', 'system', task.error, 'critical'); return; }
+
     const agent = this.createSubAgent(sel.model.id, sel.provider.id);
     task.agentId = agent.id; task.assignedModel = sel.model.id; task.status = 'running';
     agent.status = 'working'; agent.currentTask = taskId;
     this.emit('agent_update', { agent, pid: this.project.id });
     this.emit('task_update', { task, pid: this.project.id });
-    await this.runWithRetry(task, agent, sel.provider, sel.apiKey, st.description);
+
+    // Code tasks use the coding engine (file ops + shell)
+    if (st.taskType === 'code') {
+      await this.executeCodingSubtask(task, agent, sel.provider, sel.apiKey, sel.model, st.description);
+    } else {
+      await this.runWithRetry(task, agent, sel.provider, sel.apiKey, st.description);
+    }
+  }
+
+  // Execute a coding subtask using the coding engine
+  private async executeCodingSubtask(task: SubAgentTask, agent: SubAgent, provider: Provider, apiKey: any, model: Model, desc: string): Promise<void> {
+    task.attempts++;
+    this.emit('task_update', { task, pid: this.project.id });
+
+    try {
+      // Use coding sub-agent to generate plan
+      const ctx = this.buildContext();
+      const resp = await LLMClient.chatCompletion(provider, apiKey, {
+        messages: [
+          { role: 'system', content: CODING_SUBAGENT_PROMPT + (ctx ? '\n\nContext:\n' + ctx : '') },
+          { role: 'user', content: 'Task: ' + desc + '\nProject base: ' + this.codingEngine.getBasePath() },
+        ],
+        model: model.modelId, temperature: 0.2, maxTokens: 4096,
+      });
+
+      // Parse the plan from response
+      let plan;
+      try {
+        const jm = resp.content.match(/\{[\s\S]*"steps"\s*:\s*\[[\s\S]*\][\s\S]*\}/);
+        if (!jm) throw new Error('No JSON plan');
+        plan = JSON.parse(jm[0]);
+      } catch {
+        plan = { reasoning: 'Direct output', steps: [{ action: 'write_file', description: 'Write output', params: { path: 'output.md', content: resp.content } }] };
+      }
+
+      // Execute the plan using coding engine
+      const codingTask = this.codingEngine.createTask(desc, 'project-' + task.id.slice(0, 8));
+      await this.codingEngine.executePlan(plan, codingTask);
+
+      // Report results
+      task.result = codingTask.output;
+      task.status = codingTask.status === 'completed' ? 'completed' : 'failed';
+      if (task.status === 'failed') task.error = 'Some coding steps failed';
+      task.completedAt = new Date().toISOString();
+      agent.status = task.status === 'completed' ? 'completed' : 'failed';
+
+      this.addSummary(agent, task, task.status === 'completed' ? 'completed' : 'failed');
+      this.emit('task_update', { task, pid: this.project.id });
+      this.emit('coding_completed', { taskId: task.id, codingTask });
+    } catch (error: any) {
+      task.status = 'failed'; task.error = error.message; agent.status = 'failed';
+      this.addIssue(agent.id, agent.name, error.message, 'high');
+      this.addSummary(agent, task, 'failed');
+      this.emit('task_update', { task, pid: this.project.id });
+    }
   }
 
   private async runWithRetry(task: SubAgentTask, agent: SubAgent, prov: Provider, key: any, desc: string): Promise<void> {

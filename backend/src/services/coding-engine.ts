@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+﻿import { v4 as uuid } from 'uuid';
 import { Provider, Model, ApiKeyEntry } from '../types';
 import { LLMClient } from './llm-client';
 import fs from 'fs';
@@ -33,6 +33,8 @@ export class CodingEngine {
   private basePath: string;
   constructor(basePath: string) { this.basePath = basePath; }
 
+  getBasePath(): string { return this.basePath; }
+
   async planTask(description: string, provider: Provider, apiKey: ApiKeyEntry, model: Model): Promise<CodingPlan> {
     const resp = await LLMClient.chatCompletion(provider, apiKey, {
       messages: [{ role: 'system', content: CODING_PROMPT }, { role: 'user', content: 'Task: ' + description + '\nBase: ' + this.basePath }],
@@ -63,7 +65,7 @@ export class CodingEngine {
       }
     }
     task.status = task.results.every(r => r.success) ? 'completed' : 'failed';
-    task.output = task.results.map(r => (r.success ? '✅' : '❌') + ' ' + r.action + ': ' + r.output.slice(0, 200)).join('\n');
+    task.output = task.results.map(r => (r.success ? 'OK' : 'FAIL') + ' ' + r.action + ': ' + r.output.slice(0, 200)).join('\n');
     return task;
   }
 
