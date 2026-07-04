@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { ApiPoolManager } from '../providers/api-pool';
 import { CapabilityTestEngine } from '../services/capability-test';
+import { randomUUID } from 'crypto';
 
 export function createTestingRoutes(pool: ApiPoolManager, wsBroadcast: Function) {
   const r = Router();
 
   r.get('/test-cases', (_req, res) => { res.json(CapabilityTestEngine.getTestCases()); });
 
-  // Test a single model
   r.post('/:pid/models/:mid/test-full', async (req, res) => {
     const prov = pool.getProvider(req.params.pid);
     if (!prov) return res.status(404).json({ error: 'Provider not found' });
@@ -34,30 +34,26 @@ export function createTestingRoutes(pool: ApiPoolManager, wsBroadcast: Function)
     res.json({ scope: 'single', reports: [report] });
   });
 
-  // Test all models under a provider (URL)
   r.post('/:pid/test-all', async (req, res) => {
     const prov = pool.getProvider(req.params.pid);
     if (!prov) return res.status(404).json({ error: 'Provider not found' });
-    const key = pool.getNextApiKey(prov.id);
-    if (!key) return res.status(400).json({ error: 'No keys' });
-
+    const useQuick = req.body.quick !== false;
     const llmModels = prov.models.filter(m => m.type === 'llm');
     if (!llmModels.length) return res.status(400).json({ error: 'No LLM models' });
 
-    const useQuick = req.body.quick !== false;
     wsBroadcast('test_started', { providerName: prov.name, scope: 'provider', modelCount: llmModels.length });
-
-    const reports = [];
-    for (const model of llmModels) {
-      wsBroadcast('test_progress', { modelId: model.modelId, current: reports.length + 1, total: llmModels.length });
+    const reports = [] as any[];
+    for (let i = 0; i < llmModels.length; i++) {
+      const model = llmModels[i];
+      const key = pool.getNextApiKey(prov.id);
+      if (!key) { reports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, metrics: { passRate: 0, codeAvg: 0, reasonAvg: 0, chatAvg: 0, avgLatencyMs: 0 }, error: 'No keys' }); continue; }
+      wsBroadcast('test_progress', { modelId: model.modelId, current: i + 1, total: llmModels.length });
       try {
-        const report = useQuick
-          ? await CapabilityTestEngine.runQuickTest(prov, key, model)
-          : await CapabilityTestEngine.runFullTest(prov, key, model);
+        const report = useQuick ? await CapabilityTestEngine.runQuickTest(prov, key, model) : await CapabilityTestEngine.runFullTest(prov, key, model);
         model.capabilities = report.capabilities;
         reports.push(report);
       } catch (err: any) {
-        reports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, error: err.message });
+        reports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, metrics: { passRate: 0, codeAvg: 0, reasonAvg: 0, chatAvg: 0, avgLatencyMs: 0 }, error: err.message });
       }
     }
 
@@ -65,36 +61,29 @@ export function createTestingRoutes(pool: ApiPoolManager, wsBroadcast: Function)
     res.json({ scope: 'provider', providerName: prov.name, reports });
   });
 
-  // Test ALL available models across all providers
   r.post('/test-all-models', async (req, res) => {
     const providers = pool.getAllProviders().filter(p => p.apiKeys.length > 0);
     if (!providers.length) return res.status(400).json({ error: 'No providers with keys' });
-
     const useQuick = req.body.quick !== false;
     let totalCount = 0;
     for (const p of providers) totalCount += p.models.filter(m => m.type === 'llm').length;
 
     wsBroadcast('test_started', { scope: 'all', providerCount: providers.length, modelCount: totalCount });
-
-    const allReports = [];
+    const allReports = [] as any[];
     let done = 0;
-
     for (const prov of providers) {
-      const key = pool.getNextApiKey(prov.id);
-      if (!key) continue;
       const llmModels = prov.models.filter(m => m.type === 'llm');
-
       for (const model of llmModels) {
         done++;
+        const key = pool.getNextApiKey(prov.id);
+        if (!key) { allReports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, metrics: { passRate: 0, codeAvg: 0, reasonAvg: 0, chatAvg: 0, avgLatencyMs: 0 }, error: 'No keys' }); continue; }
         wsBroadcast('test_progress', { modelId: model.modelId, providerName: prov.name, current: done, total: totalCount });
         try {
-          const report = useQuick
-            ? await CapabilityTestEngine.runQuickTest(prov, key, model)
-            : await CapabilityTestEngine.runFullTest(prov, key, model);
+          const report = useQuick ? await CapabilityTestEngine.runQuickTest(prov, key, model) : await CapabilityTestEngine.runFullTest(prov, key, model);
           model.capabilities = report.capabilities;
           allReports.push(report);
         } catch (err: any) {
-          allReports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, error: err.message });
+          allReports.push({ modelId: model.id, modelName: model.modelId, providerName: prov.name, timestamp: new Date().toISOString(), results: [], overallScore: 0, capabilities: model.capabilities, metrics: { passRate: 0, codeAvg: 0, reasonAvg: 0, chatAvg: 0, avgLatencyMs: 0 }, error: err.message });
         }
       }
     }
@@ -103,7 +92,6 @@ export function createTestingRoutes(pool: ApiPoolManager, wsBroadcast: Function)
     res.json({ scope: 'all', reports: allReports });
   });
 
-  // Test multimodal
   r.post('/:pid/models/:mid/test-multimodal', async (req, res) => {
     const prov = pool.getProvider(req.params.pid);
     if (!prov) return res.status(404).json({ error: 'Not found' });

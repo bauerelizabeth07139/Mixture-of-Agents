@@ -43,11 +43,12 @@ export class Orchestrator {
         await this.executeSubtask(st);
       }
       const result = await this.aggregateResults();
+      this.project.orchestratorState.finalResult = result;
       this.project.orchestratorState.status = 'completed';
-      this.emit('orchestrator_update', { status: 'completed', result });
+      this.emit('orchestrator_update', { status: 'completed', result, projectId: this.project.id });
     } catch (e: any) {
       this.project.orchestratorState.status = 'failed';
-      this.emit('error', { message: e.message });
+      this.emit('error', { message: e.message, projectId: this.project.id });
     }
   }
 
@@ -55,8 +56,19 @@ export class Orchestrator {
     const m = this.getOrchestratorModel();
     if (!m) throw new Error('No orchestrator model available');
     const resp = await this.callOrchestrator(buildDecompositionPrompt(this.project.initialTask, this.preferences.costEfficiencyRatio));
-    try { const jm = resp.match(/\[[\s\S]*\]/); if (!jm) throw new Error(); return JSON.parse(jm[0]); }
-    catch { return [{ description: this.project.initialTask, taskType: 'general', priority: 1 }]; }
+    try {
+      const jm = resp.match(/\[[\s\S]*\]/);
+      if (!jm) throw new Error('No JSON array');
+      const arr = JSON.parse(jm[0]);
+      if (Array.isArray(arr) && arr.length) return arr.map((x: any) => ({
+        description: String(x.description || x.task || this.project.initialTask),
+        taskType: String(x.taskType || x.type || 'general'),
+        priority: Number(x.priority || 1),
+      }));
+      throw new Error('empty');
+    } catch {
+      return [{ description: this.project.initialTask, taskType: 'general', priority: 1 }];
+    }
   }
 
   private async executeSubtask(st: {description: string; taskType: string; priority: number}): Promise<void> {
@@ -74,7 +86,6 @@ export class Orchestrator {
     this.emit('agent_update', { agent, pid: this.project.id });
     this.emit('task_update', { task, pid: this.project.id });
 
-    // Code tasks use the coding engine (file ops + shell)
     if (st.taskType === 'code') {
       await this.executeCodingSubtask(task, agent, sel.provider, sel.apiKey, sel.model, st.description);
     } else {
@@ -82,13 +93,11 @@ export class Orchestrator {
     }
   }
 
-  // Execute a coding subtask using the coding engine
   private async executeCodingSubtask(task: SubAgentTask, agent: SubAgent, provider: Provider, apiKey: any, model: Model, desc: string): Promise<void> {
     task.attempts++;
     this.emit('task_update', { task, pid: this.project.id });
 
     try {
-      // Use coding sub-agent to generate plan
       const ctx = this.buildContext();
       const resp = await LLMClient.chatCompletion(provider, apiKey, {
         messages: [
@@ -98,7 +107,8 @@ export class Orchestrator {
         model: model.modelId, temperature: 0.2, maxTokens: 4096,
       });
 
-      // Parse the plan from response
+      if (!resp.content || resp.content.trim().length < 8) throw new Error('Empty model response');
+
       let plan;
       try {
         const jm = resp.content.match(/\{[\s\S]*"steps"\s*:\s*\[[\s\S]*\][\s\S]*\}/);
@@ -108,14 +118,13 @@ export class Orchestrator {
         plan = { reasoning: 'Direct output', steps: [{ action: 'write_file', description: 'Write output', params: { path: 'output.md', content: resp.content } }] };
       }
 
-      // Execute the plan using coding engine
       const codingTask = this.codingEngine.createTask(desc, 'project-' + task.id.slice(0, 8));
       await this.codingEngine.executePlan(plan, codingTask);
 
-      // Report results
+      const hasFailure = codingTask.results.some(r => !r.success);
       task.result = codingTask.output;
-      task.status = codingTask.status === 'completed' ? 'completed' : 'failed';
-      if (task.status === 'failed') task.error = 'Some coding steps failed';
+      task.status = hasFailure ? 'failed' : 'completed';
+      if (hasFailure) task.error = 'Some coding steps failed';
       task.completedAt = new Date().toISOString();
       agent.status = task.status === 'completed' ? 'completed' : 'failed';
 
@@ -139,8 +148,9 @@ export class Orchestrator {
         const ctx = this.buildContext();
         const resp = await LLMClient.chatCompletion(provider, apiKey, {
           messages: [{ role: 'system', content: SUBAGENT_SYSTEM_PROMPT + (ctx ? '\n\nContext:\n' + ctx : '') }, { role: 'user', content: desc }],
-          model: task.assignedModel, temperature: 0.3, maxTokens: 4096,
+          model: this.getModelIdForAgent(task.assignedModel), temperature: 0.3, maxTokens: 4096,
         });
+        if (!resp.content || resp.content.trim().length < 8) throw new Error('Empty response');
         task.result = resp.content; task.status = 'completed'; task.completedAt = new Date().toISOString();
         agent.status = 'completed'; this.addSummary(agent, task, 'completed');
         this.emit('task_update', { task, pid: this.project.id });
@@ -218,7 +228,7 @@ export class Orchestrator {
     const tp = buildThinkingPrefix(this.preferences.thinkingMode);
     const resp = await LLMClient.chatCompletion(m.provider, m.apiKey, {
       messages: [{ role: 'system', content: tp + ORCHESTRATOR_SYSTEM_PROMPT }, { role: 'user', content: prompt }],
-      model: m.model.modelId, temperature: 0.2, maxTokens: 4096,
+      model: this.getModelIdForAgent(m.model.id), temperature: 0.2, maxTokens: 4096,
     });
     return resp.content;
   }
@@ -228,6 +238,11 @@ export class Orchestrator {
     if (id) { const f = this.poolManager.findProviderForModel(id); if (f) return f; }
     const ms = this.poolManager.getAvailableModels('llm');
     return ms.length ? this.poolManager.findProviderForModel(ms[0].id) : null;
+  }
+
+  private getModelIdForAgent(assignedModel: string): string {
+    const found = this.poolManager.findModel(assignedModel);
+    return found ? found.model.modelId : assignedModel;
   }
 
   private addIssue(agentId: string, agentName: string, desc: string, sev: string): void {
