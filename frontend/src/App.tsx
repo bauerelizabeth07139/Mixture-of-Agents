@@ -224,8 +224,199 @@ function TaskPanel({ providers, onExecute }: { providers: Provider[]; onExecute:
   );
 }
 
+
+
+// ─── Testing Panel ───
+function TestingPanel({ providers }: { providers: Provider[] }) {
+  const allModels = providers.flatMap(p => p.models.filter(m => m.type === 'llm').map(m => ({ ...m, pName: p.name, pIcon: p.icon, provId: p.id })));
+  const [selected, setSelected] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [report, setReport] = useState<any>(null);
+  const [multiResult, setMultiResult] = useState<any>(null);
+
+  const model = allModels.find(m => m.id === selected);
+
+  const runFullTest = async () => {
+    if (!model) return;
+    setTesting(true); setReport(null);
+    try {
+      const r = await api.runFullTest(model.provId, model.id);
+      setReport(r);
+    } catch (e: any) { alert('测试失败: ' + e.message); }
+    setTesting(false);
+  };
+
+  const runQuickTest = async () => {
+    if (!model) return;
+    setTesting(true); setReport(null);
+    try {
+      const r = await api.runQuickTest(model.provId, model.id);
+      setReport(r);
+    } catch (e: any) { alert('测试失败: ' + e.message); }
+    setTesting(false);
+  };
+
+  const runMultiTest = async () => {
+    if (!model) return;
+    setTesting(true); setMultiResult(null);
+    try {
+      const r = await api.runMultimodalTest(model.provId, model.id);
+      setMultiResult(r);
+    } catch (e: any) { alert('多模态测试失败: ' + e.message); }
+    setTesting(false);
+  };
+
+  return (
+    <div>
+      <h3 style={{ marginBottom: 16 }}>🧪 模型能力测试</h3>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+        通过标准化测试题评估模型的代码、推理、对话、速度等能力，自动评分并更新能力档案。
+      </p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <select value={selected} onChange={e => setSelected(e.target.value)} style={{ flex: 1 }}>
+          <option value="">选择要测试的模型</option>
+          {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.modelId}</option>)}
+        </select>
+        <button className="btn" onClick={runQuickTest} disabled={!selected || testing}>⚡ 快速测试</button>
+        <button className="btn btn-primary" onClick={runFullTest} disabled={!selected || testing}>🔬 完整测试</button>
+        <button className="btn" onClick={runMultiTest} disabled={!selected || testing}>🖼️ 多模态测试</button>
+      </div>
+
+      {testing && <div style={{ textAlign: 'center', padding: 24 }}><div style={{ fontSize: 18 }}>⏳ 测试中...</div><div className="progress-bar mt-8"><div className="progress-fill" style={{ width: '60%', animation: 'pulse 1.5s infinite' }} /></div></div>}
+
+      {report && (
+        <div className="card">
+          <div className="card-title">📊 测试报告: {report.modelName} <span className="badge badge-info">{report.providerName}</span> <span style={{ marginLeft: 'auto', fontSize: 18, fontWeight: 700 }}>{report.overallScore}/10</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8, marginTop: 12 }}>
+            {report.results.map((tr: any) => (
+              <div key={tr.testId} style={{ padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13 }}>{tr.testName}</span>
+                  <span className={`badge ${tr.score >= 7 ? 'badge-success' : tr.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{tr.score}/10</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{tr.category} · {tr.latencyMs}ms · {tr.tokensUsed} tokens</div>
+                <div style={{ fontSize: 11, marginTop: 4 }}>{tr.details}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>📈 评分结果</div>
+            <CapabilityBar label="代码" value={report.capabilities.code} color="#3fb950" />
+            <CapabilityBar label="推理" value={report.capabilities.agent} color="#58a6ff" />
+            <CapabilityBar label="对话" value={report.capabilities.chat} color="#d29922" />
+            <CapabilityBar label="速度" value={report.capabilities.speed} color="#f85149" />
+          </div>
+        </div>
+      )}
+
+      {multiResult && (
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="card-title">🖼️ 多模态测试结果 <span className={`badge ${multiResult.score >= 7 ? 'badge-success' : multiResult.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{multiResult.score}/10</span></div>
+          <div style={{ fontSize: 12, marginTop: 8 }}>测试图片: Wikipedia Cat03.jpg</div>
+          <div style={{ fontSize: 12, marginTop: 4, color: 'var(--text-secondary)' }}>延迟: {multiResult.latencyMs}ms</div>
+          <div style={{ marginTop: 8, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8, fontSize: 13, whiteSpace: 'pre-wrap' }}>{multiResult.details}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Coding Panel ───
+function CodingPanel({ providers }: { providers: Provider[] }) {
+  const allModels = providers.flatMap(p => p.models.filter(m => m.type === 'llm').map(m => ({ ...m, pName: p.name, pIcon: p.icon, provId: p.id })));
+  const [description, setDescription] = useState('');
+  const [modelId, setModelId] = useState('');
+  const [projectPath, setProjectPath] = useState('');
+  const [executing, setExecuting] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [workspace, setWorkspace] = useState<any>(null);
+
+  const execute = async () => {
+    if (!description.trim()) return;
+    setExecuting(true); setResult(null);
+    try {
+      const model = allModels.find(m => m.id === modelId);
+      const r = await api.executeCoding(description, projectPath || undefined, modelId || undefined, model?.provId);
+      setResult(r);
+      // Refresh workspace
+      const ws = await api.getWorkspace();
+      setWorkspace(ws);
+    } catch (e: any) { alert('执行失败: ' + e.message); }
+    setExecuting(false);
+  };
+
+  const loadWorkspace = async () => {
+    try { const ws = await api.getWorkspace(); setWorkspace(ws); } catch {}
+  };
+
+  return (
+    <div>
+      <h3 style={{ marginBottom: 16 }}>💻 自动编程</h3>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+        类似 Codex/Trae 的自动化编程能力。描述你要构建的项目，AI会自动生成计划并执行文件创建、代码编写、依赖安装等操作。
+      </p>
+      <div className="form-group">
+        <label>编程任务描述</label>
+        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="例如：创建一个Express.js REST API，包含用户CRUD操作和SQLite数据库" rows={4} />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+          <label>项目路径</label>
+          <input value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="my-project (可选)" />
+        </div>
+        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+          <label>使用模型</label>
+          <select value={modelId} onChange={e => setModelId(e.target.value)}>
+            <option value="">自动选择</option>
+            {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.modelId}</option>)}
+          </select>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn btn-primary" onClick={execute} disabled={!description.trim() || executing}>
+          {executing ? '⏳ 执行中...' : '🚀 开始编程'}
+        </button>
+        <button className="btn" onClick={loadWorkspace}>📁 查看工作区</button>
+      </div>
+
+      {executing && (
+        <div className="card mt-16" style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 16 }}>🤖 AI正在规划并执行编程任务...</div>
+          <div className="progress-bar mt-8"><div className="progress-fill" style={{ width: '70%', animation: 'pulse 1.5s infinite' }} /></div>
+        </div>
+      )}
+
+      {result && (
+        <div className="card mt-16">
+          <div className="card-title">📋 执行结果 <span className={`badge ${result.status === 'completed' ? 'badge-success' : 'badge-error'}`}>{result.status}</span></div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>{result.description}</div>
+          {result.plan.map((step: any, i: number) => (
+            <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+              <span>{step.status === 'completed' ? '✅' : step.status === 'failed' ? '❌' : step.status === 'running' ? '⏳' : '⬜'}</span>
+              <span style={{ fontSize: 12, fontWeight: 600 }}>{step.action}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>{step.description}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8, fontSize: 12, whiteSpace: 'pre-wrap', maxHeight: 300, overflow: 'auto' }}>{result.output}</div>
+        </div>
+      )}
+
+      {workspace && workspace.files && workspace.files.length > 0 && (
+        <div className="card mt-16">
+          <div className="card-title">📁 工作区文件</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>{workspace.workDir}</div>
+          {workspace.files.map((f: string, i: number) => (
+            <div key={i} style={{ padding: '4px 0', fontSize: 12, fontFamily: 'monospace' }}>📄 {f}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function App() {
-  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor'>('task');
+  const [tab, setTab] = useState<'task' | 'providers' | 'models' | 'monitor' | 'testing' | 'coding'>('task');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string; time: string }>>([]);
@@ -263,7 +454,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ padding: 8 }}>
-          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'}].map(t => (
+          {[{k:'task',l:'📝 任务',i:'task'},{k:'monitor',l:'🤖 监控',i:'monitor'},{k:'providers',l:'📦 提供商',i:'providers'},{k:'models',l:'🎯 模型',i:'models'},{k:'testing',l:'🧪 测试',i:'testing'},{k:'coding',l:'💻 编程',i:'coding'}].map(t => (
             <div key={t.k} className={`tab ${tab === t.k ? 'active' : ''}`} onClick={() => setTab(t.k as any)}>{t.l}</div>
           ))}
         </div>
@@ -284,6 +475,8 @@ export default function App() {
           {tab === 'providers' && <ProviderSetup onRefresh={loadProviders} />}
           {tab === 'models' && <ModelCapabilities providers={providers} />}
           {tab === 'monitor' && <AgentMonitor project={project} />}
+          {tab === 'testing' && <TestingPanel providers={providers} />}
+          {tab === 'coding' && <CodingPanel providers={providers} />}
         </div>
       </div>
     </div>
