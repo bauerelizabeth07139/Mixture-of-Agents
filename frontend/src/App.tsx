@@ -229,35 +229,47 @@ function TaskPanel({ providers, onExecute }: { providers: Provider[]; onExecute:
 // ─── Testing Panel ───
 function TestingPanel({ providers }: { providers: Provider[] }) {
   const allModels = providers.flatMap(p => p.models.filter(m => m.type === 'llm').map(m => ({ ...m, pName: p.name, pIcon: p.icon, provId: p.id })));
-  const [selected, setSelected] = useState('');
+  const [scope, setScope] = useState<'single' | 'provider' | 'all'>('single');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [testMode, setTestMode] = useState<'quick' | 'full'>('quick');
   const [testing, setTesting] = useState(false);
-  const [report, setReport] = useState<any>(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0, label: '' });
+  const [reports, setReports] = useState<any[]>([]);
   const [multiResult, setMultiResult] = useState<any>(null);
 
-  const model = allModels.find(m => m.id === selected);
+  const model = allModels.find(m => m.id === selectedModel);
+  const uniqueProviders = providers.filter(p => p.models.some(m => m.type === 'llm'));
 
-  const runFullTest = async () => {
-    if (!model) return;
-    setTesting(true); setReport(null);
+  const runTest = async () => {
+    setTesting(true); setReports([]); setMultiResult(null);
     try {
-      const r = await api.runFullTest(model.provId, model.id);
-      setReport(r);
-    } catch (e: any) { alert('测试失败: ' + e.message); }
-    setTesting(false);
-  };
-
-  const runQuickTest = async () => {
-    if (!model) return;
-    setTesting(true); setReport(null);
-    try {
-      const r = await api.runQuickTest(model.provId, model.id);
-      setReport(r);
+      if (scope === 'single') {
+        if (!model) { alert('请选择模型'); setTesting(false); return; }
+        setProgress({ current: 1, total: 1, label: model.modelId });
+        const r = testMode === 'quick'
+          ? await api.runQuickTest(model.provId, model.id)
+          : await api.runFullTest(model.provId, model.id);
+        setReports(r.reports || [r]);
+      } else if (scope === 'provider') {
+        if (!selectedProvider) { alert('请选择提供商'); setTesting(false); return; }
+        const prov = providers.find(p => p.id === selectedProvider);
+        const count = prov?.models.filter(m => m.type === 'llm').length || 0;
+        setProgress({ current: 0, total: count, label: prov?.name || '' });
+        const r = await api.runProviderTest(selectedProvider, testMode === 'quick');
+        setReports(r.reports || []);
+      } else {
+        const totalCount = allModels.length;
+        setProgress({ current: 0, total: totalCount, label: '所有模型' });
+        const r = await api.runAllTest(testMode === 'quick');
+        setReports(r.reports || []);
+      }
     } catch (e: any) { alert('测试失败: ' + e.message); }
     setTesting(false);
   };
 
   const runMultiTest = async () => {
-    if (!model) return;
+    if (!model) { alert('请选择模型'); return; }
     setTesting(true); setMultiResult(null);
     try {
       const r = await api.runMultimodalTest(model.provId, model.id);
@@ -266,54 +278,145 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
     setTesting(false);
   };
 
+  // Compute summary stats for batch reports
+  const summary = reports.length > 0 ? {
+    count: reports.length,
+    avgScore: (reports.reduce((s: number, r: any) => s + (r.overallScore || 0), 0) / reports.length).toFixed(1),
+    best: reports.reduce((b: any, r: any) => (r.overallScore || 0) > (b.overallScore || 0) ? r : b, reports[0]),
+    worst: reports.reduce((w: any, r: any) => (r.overallScore || 0) < (w.overallScore || 0) ? r : w, reports[0]),
+  } : null;
+
   return (
     <div>
       <h3 style={{ marginBottom: 16 }}>🧪 模型能力测试</h3>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-        通过标准化测试题评估模型的代码、推理、对话、速度等能力，自动评分并更新能力档案。
+        通过标准化测试题评估模型能力，自动评分并更新能力档案。支持单模型、单提供商、全量三种测试范围。
       </p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <select value={selected} onChange={e => setSelected(e.target.value)} style={{ flex: 1 }}>
-          <option value="">选择要测试的模型</option>
-          {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.modelId}</option>)}
-        </select>
-        <button className="btn" onClick={runQuickTest} disabled={!selected || testing}>⚡ 快速测试</button>
-        <button className="btn btn-primary" onClick={runFullTest} disabled={!selected || testing}>🔬 完整测试</button>
-        <button className="btn" onClick={runMultiTest} disabled={!selected || testing}>🖼️ 多模态测试</button>
+
+      {/* Scope selector */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-title">📋 测试范围</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {[{k:'single',l:'🎯 单个模型',d:'测试选中的一个模型'},{k:'provider',l:'🔗 单个提供商',d:'测试该URL下所有模型'},{k:'all',l:'🌐 所有模型',d:'测试所有已配置的模型'}].map(s => (
+            <div key={s.k} onClick={() => setScope(s.k as any)} style={{ flex: 1, padding: 12, borderRadius: 8, border: '2px solid ' + (scope === s.k ? 'var(--accent)' : 'var(--border)'), cursor: 'pointer', background: scope === s.k ? 'rgba(88,166,255,0.08)' : 'var(--bg-tertiary)', transition: 'all 0.2s' }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{s.l}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{s.d}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Selector based on scope */}
+        {scope === 'single' && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ flex: 1 }}>
+              <option value="">选择模型</option>
+              {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.modelId}</option>)}
+            </select>
+          </div>
+        )}
+        {scope === 'provider' && (
+          <select value={selectedProvider} onChange={e => setSelectedProvider(e.target.value)} style={{ width: '100%' }}>
+            <option value="">选择提供商 (URL)</option>
+            {uniqueProviders.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name} ({p.models.filter(m=>m.type==='llm').length} 模型) - {p.baseUrl}</option>)}
+          </select>
+        )}
+        {scope === 'all' && (
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            将测试 {allModels.length} 个模型，来自 {uniqueProviders.length} 个提供商
+          </div>
+        )}
       </div>
 
-      {testing && <div style={{ textAlign: 'center', padding: 24 }}><div style={{ fontSize: 18 }}>⏳ 测试中...</div><div className="progress-bar mt-8"><div className="progress-fill" style={{ width: '60%', animation: 'pulse 1.5s infinite' }} /></div></div>}
+      {/* Test mode and actions */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+        <select value={testMode} onChange={e => setTestMode(e.target.value as any)} style={{ width: 140 }}>
+          <option value="quick">⚡ 快速测试 (3题)</option>
+          <option value="full">🔬 完整测试 (8题)</option>
+        </select>
+        <button className="btn btn-primary" onClick={runTest} disabled={testing}>
+          {testing ? '⏳ 测试中...' : '🚀 开始' + (scope === 'single' ? '测试' : scope === 'provider' ? '批量测试' : '全量测试')}
+        </button>
+        {scope === 'single' && model && (
+          <button className="btn" onClick={runMultiTest} disabled={testing}>🖼️ 多模态测试</button>
+        )}
+      </div>
 
-      {report && (
-        <div className="card">
-          <div className="card-title">📊 测试报告: {report.modelName} <span className="badge badge-info">{report.providerName}</span> <span style={{ marginLeft: 'auto', fontSize: 18, fontWeight: 700 }}>{report.overallScore}/10</span></div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8, marginTop: 12 }}>
-            {report.results.map((tr: any) => (
-              <div key={tr.testId} style={{ padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, fontSize: 13 }}>{tr.testName}</span>
-                  <span className={`badge ${tr.score >= 7 ? 'badge-success' : tr.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{tr.score}/10</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{tr.category} · {tr.latencyMs}ms · {tr.tokensUsed} tokens</div>
-                <div style={{ fontSize: 11, marginTop: 4 }}>{tr.details}</div>
+      {/* Progress indicator for batch tests */}
+      {testing && (
+        <div className="card" style={{ textAlign: 'center', marginBottom: 16 }}>
+          <div style={{ fontSize: 14 }}>⏳ 正在测试: {progress.label}</div>
+          {progress.total > 1 && (
+            <>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{progress.current} / {progress.total}</div>
+              <div className="progress-bar mt-8"><div className="progress-fill" style={{ width: (progress.total > 0 ? (progress.current / progress.total) * 100 : 50) + '%' }} /></div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Summary for batch results */}
+      {summary && reports.length > 1 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card-title">📊 测试汇总</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 8 }}>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700 }}>{summary.count}</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>测试模型</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{summary.avgScore}</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>平均分</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>{summary.best?.overallScore}</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>最高: {summary.best?.modelName?.slice(0, 15)}</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--error)' }}>{summary.worst?.overallScore}</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>最低: {summary.worst?.modelName?.slice(0, 15)}</div></div>
+          </div>
+          {/* Ranking table */}
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>排名</div>
+            {[...reports].sort((a: any, b: any) => (b.overallScore || 0) - (a.overallScore || 0)).map((rep: any, i: number) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: i % 2 === 0 ? 'var(--bg-tertiary)' : 'transparent', borderRadius: 4, fontSize: 12 }}>
+                <span style={{ width: 24, fontWeight: 700, color: i === 0 ? 'var(--success)' : i < 3 ? 'var(--accent)' : 'var(--text-secondary)' }}>#{i + 1}</span>
+                <span style={{ flex: 1 }}>{rep.providerName} / {rep.modelName}</span>
+                <span className={`badge ${rep.overallScore >= 7 ? 'badge-success' : rep.overallScore >= 4 ? 'badge-warning' : 'badge-error'}`}>{rep.overallScore}/10</span>
               </div>
             ))}
-          </div>
-          <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>📈 评分结果</div>
-            <CapabilityBar label="代码" value={report.capabilities.code} color="#3fb950" />
-            <CapabilityBar label="推理" value={report.capabilities.agent} color="#58a6ff" />
-            <CapabilityBar label="对话" value={report.capabilities.chat} color="#d29922" />
-            <CapabilityBar label="速度" value={report.capabilities.speed} color="#f85149" />
           </div>
         </div>
       )}
 
+      {/* Individual report details */}
+      {reports.map((report: any, ri: number) => (
+        <div key={ri} className="card" style={{ marginBottom: 12 }}>
+          <div className="card-title">
+            {reports.length > 1 && <span style={{ color: 'var(--text-secondary)', marginRight: 4 }}>#{ri + 1}</span>}
+            {report.modelName} <span className="badge badge-info">{report.providerName}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 18, fontWeight: 700 }}>{report.overallScore}/10</span>
+          </div>
+          {report.error && <div style={{ color: 'var(--error)', fontSize: 12, marginBottom: 8 }}>❌ {report.error}</div>}
+          {report.results?.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8, marginTop: 8 }}>
+              {report.results.map((tr: any) => (
+                <div key={tr.testId} style={{ padding: 10, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600, fontSize: 12 }}>{tr.testName}</span>
+                    <span className={`badge ${tr.score >= 7 ? 'badge-success' : tr.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{tr.score}/10</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{tr.category} · {tr.latencyMs}ms · {tr.tokensUsed}tok</div>
+                  <div style={{ fontSize: 11, marginTop: 2 }}>{tr.details}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {report.capabilities && (
+            <div style={{ marginTop: 12, padding: 10, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+              <CapabilityBar label="代码" value={report.capabilities.code} color="#3fb950" />
+              <CapabilityBar label="推理" value={report.capabilities.agent} color="#58a6ff" />
+              <CapabilityBar label="对话" value={report.capabilities.chat} color="#d29922" />
+              <CapabilityBar label="速度" value={report.capabilities.speed} color="#f85149" />
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Multimodal result */}
       {multiResult && (
         <div className="card" style={{ marginTop: 12 }}>
-          <div className="card-title">🖼️ 多模态测试结果 <span className={`badge ${multiResult.score >= 7 ? 'badge-success' : multiResult.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{multiResult.score}/10</span></div>
-          <div style={{ fontSize: 12, marginTop: 8 }}>测试图片: Wikipedia Cat03.jpg</div>
-          <div style={{ fontSize: 12, marginTop: 4, color: 'var(--text-secondary)' }}>延迟: {multiResult.latencyMs}ms</div>
+          <div className="card-title">🖼️ 多模态测试 <span className={`badge ${multiResult.score >= 7 ? 'badge-success' : multiResult.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{multiResult.score}/10</span></div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>延迟: {multiResult.latencyMs}ms</div>
           <div style={{ marginTop: 8, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8, fontSize: 13, whiteSpace: 'pre-wrap' }}>{multiResult.details}</div>
         </div>
       )}
