@@ -1,7 +1,3 @@
-﻿// ============================================================
-// Provider Presets - Common AI API providers
-// ============================================================
-
 import { ProviderPreset } from '../types';
 
 export const PROVIDER_PRESETS: ProviderPreset[] = [
@@ -13,6 +9,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🤖',
     description: 'GPT-4o, GPT-4, DALL-E, Whisper, TTS',
     defaultModels: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'dall-e-3', 'tts-1', 'whisper-1'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'deepseek',
@@ -22,6 +19,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🔬',
     description: 'DeepSeek-V3, DeepSeek-Coder, DeepSeek-R1',
     defaultModels: ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'zhipu',
@@ -31,6 +29,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🧬',
     description: 'GLM-4, GLM-4V, CogView, CogVideo',
     defaultModels: ['glm-4', 'glm-4-flash', 'glm-4v', 'cogview-3', 'cogvideox'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'moonshot',
@@ -40,6 +39,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🌙',
     description: 'Kimi, Moonshot-v1 series, 128K context',
     defaultModels: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'siliconflow',
@@ -48,7 +48,8 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     type: 'openai-compatible',
     icon: '⚡',
     description: 'Multi-model gateway: Qwen, DeepSeek, SD, FLUX',
-    defaultModels: ['Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-V3', 'stabilityai/stable-diffusion-xl-base-1.0', 'black-forest-labs/FLUX.1-schnell'],
+    defaultModels: ['Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-V3', 'stabilityai/stable-diffusion-xl-base-1.0'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'stepfun',
@@ -58,6 +59,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🪜',
     description: 'Step-1, Step-1V, Step-2 series',
     defaultModels: ['step-1-8k', 'step-1-32k', 'step-1-128k', 'step-1v-8k', 'step-2-16k'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'volcengine',
@@ -67,6 +69,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🌋',
     description: 'Doubao series, Coze, TTS, image gen',
     defaultModels: ['doubao-1.5-pro-32k', 'doubao-1.5-lite-32k', 'doubao-vision-pro-32k'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'minimax',
@@ -76,6 +79,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🔷',
     description: 'abab series, TTS, Music generation',
     defaultModels: ['abab6.5-chat', 'abab6.5s-chat', 'abab5.5-chat'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'qwen',
@@ -84,16 +88,18 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     type: 'openai-compatible',
     icon: '🔮',
     description: 'Qwen-Max, Qwen-VL, Qwen-Audio, Wanx image gen',
-    defaultModels: ['qwen-max', 'qwen-plus', 'qwen-turbo', 'qwen-vl-max', 'qwen-audio-turbo', 'wanx-v1'],
+    defaultModels: ['qwen-max', 'qwen-plus', 'qwen-turbo', 'qwen-vl-max', 'qwen-audio-turbo'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'baidu',
-    name: 'Baidu (百度文心)',
-    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop',
-    type: 'custom',
+    name: 'Baidu (百度千帆)',
+    baseUrl: 'https://qianfan.baidubce.com/v2',
+    type: 'openai-compatible',
     icon: '🐻',
     description: 'ERNIE series, image generation',
     defaultModels: ['ernie-4.0-8k', 'ernie-3.5-8k', 'ernie-speed-128k'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'iflytek',
@@ -103,6 +109,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🅰️',
     description: 'Spark series, TTS, STT',
     defaultModels: ['generalv3.5', 'generalv3', '4.0Ultra'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'baichuan',
@@ -112,24 +119,47 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '🏔️',
     description: 'Baichuan series, long context',
     defaultModels: ['Baichuan4', 'Baichuan3-Turbo', 'Baichuan2-Turbo'],
+    modelsEndpoint: '/models',
   },
   {
-    id: 'anthropic',
-    name: 'Anthropic',
-    baseUrl: 'https://api.anthropic.com/v1',
-    type: 'anthropic',
-    icon: '🧠',
-    description: 'Claude 3.5, Claude 3 Opus/Sonnet/Haiku',
-    defaultModels: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+    id: 'lingyiwanwu',
+    name: 'LingYiwanWu (零一万物)',
+    baseUrl: 'https://api.lingyiwanwu.com/v1',
+    type: 'openai-compatible',
+    icon: '🌐',
+    description: 'Yi series, Yi-VL multimodal',
+    defaultModels: ['yi-large', 'yi-medium', 'yi-spark', 'yi-vision'],
+    modelsEndpoint: '/models',
+  },
+  {
+    id: 'tencent',
+    name: 'Tencent (腾讯混元)',
+    baseUrl: 'https://api.lkeap.cloud.tencent.com/v1',
+    type: 'openai-compatible',
+    icon: '🟢',
+    description: 'Hunyuan series',
+    defaultModels: ['hunyuan-turbo', 'hunyuan-pro', 'hunyuan-standard'],
+    modelsEndpoint: '/models',
   },
   {
     id: 'mimo',
     name: 'MiMo (小米)',
-    baseUrl: 'https://api.mimo.ai/v1',
+    baseUrl: 'https://api.xiaomimimo.com/v1',
     type: 'openai-compatible',
     icon: '📱',
-    description: 'MiMo-7B and future models',
-    defaultModels: ['mimo-7b-chat'],
+    description: 'MiMo-V2.5, V2-Pro, V2-Flash, V2-Omni, TTS, ASR',
+    defaultModels: ['mimo-v2.5', 'mimo-v2.5-pro', 'mimo-v2-flash', 'mimo-v2-pro', 'mimo-v2-omni', 'mimo-v2.5-tts', 'mimo-v2.5-asr'],
+    modelsEndpoint: '/models',
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic',
+    baseUrl: 'https://api.anthropic.com',
+    type: 'anthropic',
+    icon: '🧠',
+    description: 'Claude 3.5, Claude 3 Opus/Sonnet/Haiku',
+    defaultModels: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+    modelsEndpoint: null, // Anthropic doesn't have /models endpoint
   },
   {
     id: 'local',
@@ -139,6 +169,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     icon: '💻',
     description: 'Local models via Ollama, LM Studio, etc.',
     defaultModels: ['llama3', 'codellama', 'mistral', 'qwen2.5'],
+    modelsEndpoint: '/models',
   },
 ];
 

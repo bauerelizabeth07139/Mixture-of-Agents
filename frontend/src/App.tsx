@@ -25,7 +25,19 @@ function ProviderSetup({ onRefresh }: { onRefresh: () => void }) {
     setPresets(p); setProviders(prov);
   }, []);
 
+
   useEffect(() => { load(); }, [load]);
+
+  const [fetchingModels, setFetchingModels] = useState('');
+  const fetchModels = async (provId: string) => {
+    setFetchingModels(provId);
+    try {
+      const result = await api.fetchModels(provId);
+      if (result.error) { alert('获取模型失败: ' + result.error); }
+      else { await load(); onRefresh(); }
+    } catch (e: any) { alert('获取模型失败: ' + e.message); }
+    setFetchingModels('');
+  };
 
   return (
     <div>
@@ -62,7 +74,7 @@ function ProviderSetup({ onRefresh }: { onRefresh: () => void }) {
           </div>
           {providers.map(p => (
             <div key={p.id} className="card">
-              <div className="card-title">{p.icon || '🔧'} {p.name} <span className="badge badge-info">{p.models.length} 模型</span> <span className="badge badge-success">{p.apiKeys.length} Keys</span></div>
+              <div className="card-title">{p.icon || '🔧'} {p.name} <span className="badge badge-info">{p.models.length} 模型</span> <span className="badge badge-success">{p.apiKeys.length} Keys</span>\n                  {p.apiKeys.length > 0 && <button className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={(e) => { e.stopPropagation(); fetchModels(p.id); }} disabled={fetchingModels===p.id}>{fetchingModels===p.id ? '⏳ 获取中...' : '🔄 获取模型'}</button>}\n                </div>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8 }}>{p.baseUrl}</div>
               {p.models.map(m => (
                 <div key={m.id} style={{ padding: '4px 0', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
