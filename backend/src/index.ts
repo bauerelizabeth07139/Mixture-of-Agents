@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -29,7 +29,7 @@ app.use('/api/providers', createProviderRoutes(poolManager));
 app.use('/api/projects', createProjectRoutes(projectManager, poolManager, wsManager.broadcast.bind(wsManager), extManager));
 app.use('/api/models', createModelRoutes(poolManager));
 app.use('/api/testing', createTestingRoutes(poolManager, wsManager.broadcast.bind(wsManager)));
-app.use('/api/coding', createCodingRoutes(poolManager, wsManager.broadcast.bind(wsManager)));
+app.use('/api/coding', createCodingRoutes(poolManager, wsManager.broadcast.bind(wsManager), projectManager));
 app.use('/api/extensions', createExtensionRoutes(extManager));
 app.get('/api/health', (_req, res) => { res.json({ status: 'ok', providers: poolManager.getAllProviders().length, ws: wsManager.getClientCount() }); });
 

@@ -1,4 +1,4 @@
-const B = '/api';
+﻿const B = '/api';
 const h = { 'Content-Type': 'application/json' };
 export const api = {
   fetchPresets: () => fetch(B+'/providers/presets').then(r=>r.json()),
@@ -21,6 +21,11 @@ export const api = {
   // Coding
   executeCoding: (desc: string, projPath?: string, modelId?: string, providerId?: string) => fetch(B+'/coding/execute',{method:'POST',headers:h,body:JSON.stringify({description:desc,projectPath:projPath,modelId:modelId,providerId:providerId})}).then(r=>r.json()),
   getWorkspace: () => fetch(B+'/coding/workspace').then(r=>r.json()),
+  // Environment & Shell
+  getEnvironment: () => fetch(B+'/coding/environment').then(r=>r.json()),
+  runShell: (command: string, workdir?: string, timeout?: number) => fetch(B+'/coding/shell',{method:'POST',headers:h,body:JSON.stringify({command,workdir,timeout})}).then(r=>r.json()),
+  readFile: (filePath: string, workdir?: string) => fetch(B+'/coding/read-file',{method:'POST',headers:h,body:JSON.stringify({filePath,workdir})}).then(r=>r.json()),
+  listFiles: (workdir?: string) => fetch(B+'/coding/list-files',{method:'POST',headers:h,body:JSON.stringify({workdir})}).then(r=>r.json()),
   // Projects
   fetchProjects: () => fetch(B+'/projects').then(r=>r.json()),
   createProject: (n: string, d: string, t: string, m: string) => fetch(B+'/projects',{method:'POST',headers:h,body:JSON.stringify({name:n,description:d,task:t,modelId:m})}).then(r=>r.json()),
