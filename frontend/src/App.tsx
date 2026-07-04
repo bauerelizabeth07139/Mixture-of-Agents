@@ -259,7 +259,7 @@ export default function App() {
         <div style={{ padding: 16, borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24 }}>🧬</span>
-            <div><div style={{ fontWeight: 600 }}>Mixture of Agents</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>多模型协同智能体</div></div>
+            <div><div style={{ fontWeight: 600 }}>Mixture of Agents</div><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>多模型协同智能体 · 智能调度引擎</div></div>
           </div>
         </div>
         <div style={{ padding: 8 }}>

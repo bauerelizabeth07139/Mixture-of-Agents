@@ -1,58 +1,41 @@
 # Mixture of Agents (MoA)
 
-Multi-model collaborative agent system with macro orchestrator.
+多模型协同智能体系统 — 智能调度引擎驱动，通过宏观调控模型动态分配子代理。
 
-## Architecture
+## 核心架构
 
 ```
-         Orchestrator (default model)
-              |    |    |
-         Agent1 Agent2 Agent3
-         (code) (agent)(chat)
+        智能调度引擎 (Macro Orchestrator)
+       /      |       |       \
+  Code Agent  Reasoning  Chat  Multimodal
 ```
 
-## Features
+## 核心特性
 
-- Multi-model collaboration under same/different API keys
-- Cost/Efficiency slider (0-1, draggable + input box)
-- API pool: up to 50 keys per URL, auto-failover
-- Issue library (last 50), agent summaries (completed: last 20)
-- 15+ preset providers (OpenAI, DeepSeek, SiliconFlow, etc.)
-- Model capability scoring (code, agent, chat, context, speed, multimodal)
-- Thinking modes: low/medium/high
-- TTS and image generation model support
-- Real-time WebSocket monitoring
+- 智能调度引擎: 自适应任务分解、失败评估、模型切换
+- 多模型协同: 同一/不同API Key下模型协同
+- 成本/效率控制: 进度条+数字输入 (0=效率, 0.5=均衡, 1=成本)
+- API池管理: 每URL最多50条Key，自动故障转移
+- 上下文库: 问题库(50条) + 子代理概略库(完成20条/未完成)
+- 思考强度: 低/中/高
+- 17+预设提供商 + 自动模型发现
+- 模型能力评分 + TTS/图片/ASR支持
 
-## Quick Start
+## 快速开始
 
 ```bash
 cd backend && npm install && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Visit http://localhost:5173
+## 预设提供商 (17家)
 
-## Preset Providers
+OpenAI, DeepSeek, 智谱AI, 月之暗面, 硅基流动, 阶跃星辰, 火山引擎, MiniMax, 通义千问, 百度千帆, 讯飞星火, 百川智能, 零一万物, 腾讯混元, 小米MiMo, Anthropic, 本地/Ollama
 
-| Provider | URL |
-|----------|-----|
-| OpenAI | api.openai.com/v1 |
-| DeepSeek | api.deepseek.com/v1 |
-| Zhipu AI | open.bigmodel.cn/api/paas/v4 |
-| Moonshot | api.moonshot.cn/v1 |
-| SiliconFlow | api.siliconflow.cn/v1 |
-| StepFun | api.stepfun.com/v1 |
-| Volcengine | ark.cn-beijing.volces.com/api/v3 |
-| MiniMax | api.minimax.chat/v1 |
-| Qwen | dashscope.aliyuncs.com/compatible-mode/v1 |
-| Baidu | aip.baidubce.com |
-| iFlytek | spark-api-open.xf-yun.com/v1 |
-| Baichuan | api.baichuan-ai.com/v1 |
-| Anthropic | api.anthropic.com/v1 |
-| MiMo | api.mimo.ai/v1 |
-| Local/Ollama | localhost:11434/v1 |
+## 调度引擎决策协议
 
-## Tech Stack
-
-- Backend: Node.js + Express + TypeScript + WebSocket
-- Frontend: React + TypeScript + Vite
+1. 任务分解: 按能力分配子代理
+2. 失败评估: retry / switch_model / abort
+3. 上下文感知: 引用问题库避免重复
+4. 结果聚合: 合成、去矛盾、填补空白
+5. 绝不妥协: 用尽方案才标记失败
