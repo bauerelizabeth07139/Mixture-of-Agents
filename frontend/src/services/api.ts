@@ -44,4 +44,9 @@ export const api = {
   addSkillCustom: (config: any) => fetch(B+'/extensions/skills',{method:'POST',headers:h,body:JSON.stringify(config)}).then(r=>r.json()),
   updateSkill: (id: string, updates: any) => fetch(B+'/extensions/skills/'+id,{method:'PUT',headers:h,body:JSON.stringify(updates)}).then(r=>r.json()),
   removeSkill: (id: string) => fetch(B+'/extensions/skills/'+id,{method:'DELETE'}).then(r=>r.json()),
+  // File write
+  writeFile: (filePath: string, content: string, workdir?: string) => fetch(B+'/coding/write-file',{method:'POST',headers:h,body:JSON.stringify({filePath,content,workdir})}).then(r=>r.json()),
+  // Read absolute path
+  readAbsolute: (absolutePath: string) => fetch(B+'/coding/read-absolute',{method:'POST',headers:h,body:JSON.stringify({absolutePath})}).then(r=>r.json()),
 };
+
