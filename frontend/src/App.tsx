@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from './services/api';
 import type { Provider, ProviderPreset, Model, McpPreset, SkillPreset, McpServerConfig, SkillConfig, Project } from './types';
 import { TerminalPanel } from './components/Terminal';
@@ -574,6 +574,11 @@ export default function App() {
   const [modelId, setModelId] = useState('');
   const [thinking, setThinking] = useState<'low' | 'medium' | 'high'>('medium');
   const [ratio, setRatio] = useState(0.5);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('moa-theme') as 'dark' | 'light') || 'dark');
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('moa-theme', theme);
+  }, [theme]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -664,6 +669,9 @@ export default function App() {
             <div className="title">Mixture of Agents</div>
             <div className="subtitle">多模型协同 · 智能调度</div>
           </div>
+          <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title={theme === 'dark' ? '切换到日间模式' : '切换到夜间模式'}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
         <div className="sidebar-tabs">
           {(Object.entries(tabNames) as [string, string][]).map(([k, l]) => (
