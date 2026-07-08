@@ -1,41 +1,106 @@
-# Mixture of Agents (MoA)
+﻿# Mixture of Agents (MoA)
 
-多模型协同智能体系统 — 智能调度引擎驱动，通过宏观调控模型动态分配子代理。
+Multi-model collaborative agent system driven by intelligent scheduling engine.
 
-## 核心架构
+![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-blue)
+![Node](https://img.shields.io/badge/node.js-18+-339933)
+![License](https://img.shields.io/badge/license-MIT-green)
 
+## Core Features
+
+- Intelligent scheduling engine with adaptive task decomposition
+- Multi-model collaboration across same/different API keys
+- Cost/efficiency control slider (0 = efficiency, 1 = cost)
+- API pool management: up to 50 keys per URL with auto-failover
+- Context library: question bank (50) + sub-agent strategy library
+- Capability testing: 8 standardized tests
+- Dark/Light theme: Codex-style UI
+
+## Quick Start
+
+Prerequisites: Node.js 18+
+
+```bash
+git clone https://github.com/bauerelizabeth07139/Mixture-of-Agents.git
+cd Mixture-of-Agents
+
+# Start backend
+cd backend && npm install && npm run dev
+
+# Start frontend (new terminal)
+cd frontend && npm install && npm run dev
 ```
-        智能调度引擎 (Macro Orchestrator)
+
+### Windows one-click start
+
+```powershell
+powershell -ExecutionPolicy Bypass -File start.ps1
+```
+
+## Configure API Key
+
+Manage API Keys via the Web UI:
+
+1. Go to Providers page
+2. Select a provider (MiMo, OpenAI, DeepSeek, etc.)
+3. Add your API Key
+4. Click Fetch Models to discover available models
+
+## MIMO API Key Test Results
+
+| Model | Status | Description |
+|-------|--------|-------------|
+| mimo-v2.5 | Available | Full-modal model with reasoning |
+| mimo-v2.5-pro | Available | Reasoning flagship model |
+| mimo-v2.5-tts | Available | Text-to-Speech |
+| mimo-v2.5-asr | Available | Speech recognition |
+
+API endpoint: https://api.xiaomimimo.com/v1
+
+## Preset Providers (17)
+
+OpenAI, DeepSeek, Zhipu AI, Moonshot, SiliconFlow, StepFun, Volcengine, MiniMax, Qwen, Baidu, iFlytek, Baichuan, LingYiwanWu, Tencent, MiMo, Anthropic, Local/Ollama
+
+## Architecture
+
+```text
+        Intelligent Scheduling Engine (Macro Orchestrator)
        /      |       |       \
   Code Agent  Reasoning  Chat  Multimodal
 ```
 
-## 核心特性
+### Scheduling Protocol
 
-- 智能调度引擎: 自适应任务分解、失败评估、模型切换
-- 多模型协同: 同一/不同API Key下模型协同
-- 成本/效率控制: 进度条+数字输入 (0=效率, 0.5=均衡, 1=成本)
-- API池管理: 每URL最多50条Key，自动故障转移
-- 上下文库: 问题库(50条) + 子代理概略库(完成20条/未完成)
-- 思考强度: 低/中/高
-- 17+预设提供商 + 自动模型发现
-- 模型能力评分 + TTS/图片/ASR支持
+1. Task decomposition: assign sub-agents by capability
+2. Failure evaluation: retry / switch_model / abort
+3. Context awareness: reference question bank to avoid duplication
+4. Result aggregation: synthesize, remove contradictions, fill gaps
+5. No compromise: exhaust all options before marking failure
 
-## 快速开始
+## Tech Stack
 
-```bash
-cd backend && npm install && npm run dev
-cd frontend && npm install && npm run dev
+- Frontend: React 18 + TypeScript + Vite
+- Backend: Express + TypeScript + WebSocket
+- Theme: Codex-style dark/light toggle
+- Real-time: WebSocket for task progress
+
+## Project Structure
+
+```text
+Mixture-of-Agents/
+├── backend/                 # Express backend
+│   └── src/
+│       ├── orchestrator/    # Scheduling engine
+│       ├── providers/       # API pool + 17 presets
+│       ├── services/        # LLM client, testing, coding engine
+│       └── routes/          # API routes
+├── frontend/                # React frontend
+│   └── src/
+│       ├── App.tsx          # Main UI
+│       └── styles/          # Codex-style themes
+└── start.ps1                # Windows launcher
 ```
 
-## 预设提供商 (17家)
+## License
 
-OpenAI, DeepSeek, 智谱AI, 月之暗面, 硅基流动, 阶跃星辰, 火山引擎, MiniMax, 通义千问, 百度千帆, 讯飞星火, 百川智能, 零一万物, 腾讯混元, 小米MiMo, Anthropic, 本地/Ollama
-
-## 调度引擎决策协议
-
-1. 任务分解: 按能力分配子代理
-2. 失败评估: retry / switch_model / abort
-3. 上下文感知: 引用问题库避免重复
-4. 结果聚合: 合成、去矛盾、填补空白
-5. 绝不妥协: 用尽方案才标记失败
+MIT
