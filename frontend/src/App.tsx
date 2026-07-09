@@ -897,8 +897,8 @@ export default function App() {
 
   // Drag-drop
   useEffect(() => {
-    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer?.types.includes('Files')) setDragging(true); };
-    const onEnter = (e: DragEvent) => { e.preventDefault(); dragCounterRef.current++; if (e.dataTransfer?.types.includes('Files')) setDragging(true); };
+    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };
+    const onEnter = (e: DragEvent) => { e.preventDefault(); dragCounterRef.current++; if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };
     const onLeave = (e: DragEvent) => { dragCounterRef.current--; if (dragCounterRef.current === 0) setDragging(false); };
     const onDrop = (e: DragEvent) => {
       e.preventDefault(); e.stopPropagation(); setDragging(false); dragCounterRef.current = 0;
@@ -1022,7 +1022,7 @@ export default function App() {
               <div className="prompt-wrapper">
                 <textarea ref={inputRef} className="prompt-input" value={inputVal} onChange={e => setInputVal(e.target.value)}
                   onKeyDown={handleKeyDown} placeholder="描述你的任务... (Enter 发送, Shift+Enter 换行, 拖拽文件可上传)"
-                  rows={1} style={{ height: Math.min(120, Math.max(24, inputVal.split('\n').length * 22)) }} />
+                  rows={2} style={{ height: Math.min(120, Math.max(24, inputVal.split('\n').length * 22)) }} />
                 <div className="prompt-actions">
                   <button className="prompt-btn" onClick={() => fileInputRef.current?.click()} title="添加文件" style={{ fontSize:16, fontWeight:700 }}>＋</button>
                   <button className="prompt-btn send" onClick={() => handleSend()} disabled={(!inputVal.trim() && attachments.length===0) || sending}>▶</button>
