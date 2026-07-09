@@ -1,0 +1,19 @@
+﻿from pathlib import Path
+p=Path(r'''C:\Users\vipuser\Documents\Codex\2026-07-08\ghp-ximpubtls1rxrj8gyywz03sikbglkw259kdn-2\work\moa-src\frontend\src\App.tsx''')
+text=p.read_text(encoding='utf-8')
+# 1) Improve DETAIL_CN with actual evaluation strings from capability-test.ts
+text=text.replace("    'Partial': '部分正确',\n", "    'Partial': '部分正确',\n    'Did not follow format': '未遵循格式',\n    'Perfect compliance': '完全符合要求',\n    'Close': '接近目标',\n    'Off target': '偏差较大',\n    'Fast': '响应较快',\n    'Slow': '响应较慢',\n")
+# 2) Improve drag handlers to ensure browser allows drop
+text=text.replace("    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };\n    const onEnter = (e: DragEvent) => { e.preventDefault(); dragCounterRef.current++; if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };\n", "    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; e.dataTransfer.effectAllowed = 'copy'; } setDragging(true); };\n    const onEnter = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounterRef.current++; if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; e.dataTransfer.effectAllowed = 'copy'; } setDragging(true); };\n")
+# 3) Make hidden file input accept all files explicitly and keep multiple
+text=text.replace('                <input ref={fileInputRef} type="file" multiple style={{ display: \'none\' }} onChange={handleFileInput} />\n', '                <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display: \'none\' }} onChange={handleFileInput} />\n')
+# 4) Show original user message text in chat, while still sending context-enriched content to backend
+text=text.replace("    const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', content, time: new Date().toLocaleTimeString('zh-CN'), attachments: currentAttachments.length > 0 ? currentAttachments : undefined };\n", "    const displayContent = task || (currentAttachments.length > 0 ? currentAttachments.map(a => a.name).join(', ') : '');\n    const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', content: displayContent, time: new Date().toLocaleTimeString('zh-CN'), attachments: currentAttachments.length > 0 ? currentAttachments : undefined };\n")
+# 5) Include text attachment contents when calling backend for richer context
+text=text.replace("        body: JSON.stringify({ message: content, modelId: modelId || undefined, thinkingMode: thinking, costEfficiencyRatio: ratio }) });\n", "        body: JSON.stringify({ message: content, attachments: currentAttachments.map(a => ({ type: a.type, name: a.name, data: a.type === 'image' ? undefined : a.data })), modelId: modelId || undefined, thinkingMode: thinking, costEfficiencyRatio: ratio }) });\n")
+# 6) Add note under expanded report capabilities
+text=text.replace("          {r.capabilities && (\n            <div style={{ marginTop: 8 }}>\n", "          {getModelNote(r.modelName) && (\n            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>\n              备注: {getModelNote(r.modelName)}\n            </div>\n          )}\n          {r.capabilities && (\n            <div style={{ marginTop: 8 }}>\n")
+# 7) Show detail Chinese translation in expanded results row
+text=text.replace("              <span style={{ flex: 1 }}>{cn(t.testName)}</span>\n              <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{t.latencyMs}ms</span>\n", "              <span style={{ flex: 1 }}>{cn(t.testName)}{t.details ? ` · ${cnDetail(String(t.details))}` : ''}</span>\n              <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{t.latencyMs}ms</span>\n")
+p.write_text(text, encoding='utf-8')
+print('patched', p)

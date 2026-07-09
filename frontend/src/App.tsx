@@ -5,6 +5,40 @@ import { TerminalPanel } from './components/Terminal';
 import { EditorPanel } from './components/Editor';
 import { EnvironmentPanel } from './components/Environment';
 
+// --- Model Notes ---
+const MODEL_NOTES: Record<string, string> = {
+  'gpt-4o': '多模态强，响应快，通用能力优秀',
+  'gpt-4-turbo': '长上下文，推理强',
+  'o1': '深度推理链，STEM强，慢速',
+  'o3': '增强推理，Agent能力强',
+  'o3-mini': '推理能力好，成本低',
+  'claude-3-5-sonnet': '编码强，指令遵循好，写作细腻',
+  'claude-3-opus': '长文分析，复杂推理',
+  'claude-4-opus': '最新旗舰，Agent能力强',
+  'claude-4-sonnet': '平衡速度与能力',
+  'gemini-2.5-pro': '百万上下文，多模态强',
+  'gemini-2.5-flash': '极速响应，成本极低',
+  'gemini-2.0-flash': '快速多模态',
+  'llama-4': '开源可部署，社区活跃',
+  'llama-3.3-70b': '开源旗舰，性价比高',
+  'deepseek-v3': '性价比极高，编码强',
+  'deepseek-r1': '深度推理，数学强',
+  'qwen-2.5-72b': '中英文强，多模态',
+  'qwq-32b': '推理强，数学好',
+  'mistral-large': '多语言，欧洲语言强',
+  'mimo-v2.5': '中文优化，移动端适配',
+};
+const getModelNote = (name: string) => MODEL_NOTES[name] || '';
+
+// --- Chat Thread Types ---
+interface ChatThread {
+  id: string;
+  title: string;
+  messages: ChatMsg[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Helper Components ───
 
 function CapabilityBar({ label, value, color }: { label: string; value: number; color: string }) {
@@ -208,6 +242,12 @@ function SettingsPanel({ providers, ratio, setRatio, thinking, setThinking, mode
           {allModels.map(m => <option key={m.id} value={m.id}>{m.pIcon} {m.pName} - {m.name}</option>)}
         </select>
       </div>
+      {modelId && getModelNote(providers.flatMap(p=>p.models).find(m=>m.id===modelId)?.name || '') && (
+        <div className="settings-section">
+          <div className="settings-section-title">备注</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{getModelNote(providers.flatMap(p=>p.models).find(m=>m.id===modelId)?.name || '')}</div>
+        </div>
+      )}
       <div className="settings-section">
         <div className="settings-section-title">思考强度</div>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -395,6 +435,7 @@ function ModelPanel({ providers }: { providers: Provider[] }) {
             {(model.capabilities as any).visionScore > 0 && (
               <span style={{ fontSize: 11, color: '#b388ff' }}>👁️ 视觉能力: {(model.capabilities as any).visionScore}/10</span>
             )}
+            {getModelNote(model.name) && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>📝 {getModelNote(model.name)}</span>}
           </div>
         </div>
       )}
@@ -447,6 +488,12 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
   const DETAIL_CN: Record<string, string> = {
     'Correct FizzBuzz': 'FizzBuzz实现正确',
     'Partial': '部分正确',
+    'Did not follow format': '未遵循格式',
+    'Perfect compliance': '完全符合要求',
+    'Close': '接近目标',
+    'Off target': '偏差较大',
+    'Fast': '响应较快',
+    'Slow': '响应较慢',
     'Incorrect': '实现错误',
     'Found the edge case bug': '找到了边界条件Bug',
     'Did not find the real bug': '未找到真正Bug',
@@ -607,6 +654,7 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
                 <SortHeader col="vision">视觉</SortHeader>
                 <SortHeader col="speed">速度</SortHeader>
                 <SortHeader col="overallScore">总分</SortHeader>
+                <th style={{ padding: '6px 8px', fontSize: 11, textAlign: 'left', borderBottom: '1px solid var(--border)' }}>备注</th>
               </tr>
             </thead>
             <tbody>
@@ -658,6 +706,7 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
                   <td style={{ padding: '8px', fontWeight: 700, fontSize: 14, color: (r.overallScore || 0) >= 7 ? 'var(--success)' : (r.overallScore || 0) >= 4 ? 'var(--warning)' : 'var(--error)' }}>
                     {(r.overallScore || 0).toFixed(1)}
                   </td>
+                <td style={{ padding: '8px', fontSize: 11, color: 'var(--text-muted)', maxWidth: 200 }}>{getModelNote(r.modelName) || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -682,10 +731,15 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
           {r.results?.map((t: any, j: number) => (
             <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', fontSize: 12 }}>
               <span className={`badge ${t.score >= 7 ? 'badge-success' : t.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{t.score}/10</span>
-              <span style={{ flex: 1 }}>{cn(t.testName)}</span>
+              <span style={{ flex: 1 }}>{cn(t.testName)}{t.details ? ` · ${cnDetail(String(t.details))}` : ''}</span>
               <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{t.latencyMs}ms</span>
             </div>
           ))}
+          {getModelNote(r.modelName) && (
+            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
+              备注: {getModelNote(r.modelName)}
+            </div>
+          )}
           {r.capabilities && (
             <div style={{ marginTop: 8 }}>
               <CapabilityBar label="代码" value={r.capabilities.code} color="var(--accent)" />
@@ -881,6 +935,9 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string>('');
+  const [editingThreadTitle, setEditingThreadTitle] = useState<string>('');
   const dragCounterRef = useRef(0);
 
   const tabNames: Record<string, string> = {
@@ -893,12 +950,33 @@ export default function App() {
   }, []);
 
   useEffect(() => { loadProviders(); }, [loadProviders]);
+  // Load threads from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('moa-threads');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setThreads(parsed);
+        if (parsed.length > 0) setActiveThreadId(parsed[0].id);
+      }
+    } catch {}
+  }, []);
+  // Persist threads
+  useEffect(() => {
+    if (threads.length >= 0) try { localStorage.setItem('moa-threads', JSON.stringify(threads)); } catch {}
+  }, [threads]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, sending]);
+  // Auto-save messages to active thread
+  useEffect(() => {
+    if (activeThreadId && messages.length > 0) {
+      setThreads(prev => prev.map(t => t.id === activeThreadId ? { ...t, messages, updatedAt: new Date().toISOString() } : t));
+    }
+  }, [messages, activeThreadId]);
 
   // Drag-drop
   useEffect(() => {
-    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };
-    const onEnter = (e: DragEvent) => { e.preventDefault(); dragCounterRef.current++; if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; setDragging(true); } };
+    const onOver = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; e.dataTransfer.effectAllowed = 'copy'; } setDragging(true); };
+    const onEnter = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); dragCounterRef.current++; if (e.dataTransfer) { e.dataTransfer.dropEffect = 'copy'; e.dataTransfer.effectAllowed = 'copy'; } setDragging(true); };
     const onLeave = (e: DragEvent) => { dragCounterRef.current--; if (dragCounterRef.current === 0) setDragging(false); };
     const onDrop = (e: DragEvent) => {
       e.preventDefault(); e.stopPropagation(); setDragging(false); dragCounterRef.current = 0;
@@ -958,7 +1036,8 @@ export default function App() {
       content += '\n\n' + textAttachments.map(a => `--- 文件: ${a.name} ---\n${a.data}\n--- 结束 ---`).join('\n\n');
     }
 
-    const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', content, time: new Date().toLocaleTimeString('zh-CN'), attachments: currentAttachments.length > 0 ? currentAttachments : undefined };
+    const displayContent = task || (currentAttachments.length > 0 ? currentAttachments.map(a => a.name).join(', ') : '');
+    const userMsg: ChatMsg = { id: Date.now().toString(), role: 'user', content: displayContent, time: new Date().toLocaleTimeString('zh-CN'), attachments: currentAttachments.length > 0 ? currentAttachments : undefined };
     setMessages(prev => [...prev, userMsg]);
     setInputVal('');
 
@@ -971,7 +1050,34 @@ export default function App() {
     } finally { setSending(false); }
   }, [inputVal, attachments, modelId, thinking, ratio, providers, selectedModelSupportsVision, findVlmModel, sending]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+  // --- Thread management ---
+  const createNewThread = () => {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    const thread: ChatThread = { id, title: '新建对话', messages: [], createdAt: now, updatedAt: now };
+    setThreads(prev => [thread, ...prev]);
+    setActiveThreadId(id);
+    setMessages([]);
+    setInputVal('');
+  };
+  const switchThread = (id: string) => {
+    const t = threads.find(x => x.id === id);
+    if (t) { setActiveThreadId(id); setMessages(t.messages); }
+  };
+  const deleteThread = (id: string) => {
+    setThreads(prev => prev.filter(t => t.id !== id));
+    if (activeThreadId === id) {
+      const rest = threads.filter(t => t.id !== id);
+      if (rest.length > 0) { setActiveThreadId(rest[0].id); setMessages(rest[0].messages); }
+      else { setActiveThreadId(''); setMessages([]); }
+    }
+  };
+  const renameThread = (id: string, title: string) => {
+    setThreads(prev => prev.map(t => t.id === id ? { ...t, title } : t));
+    setEditingThreadTitle('');
+  };
+
+const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files) { processFiles(Array.from(e.target.files)); e.target.value = ''; } };
 
   return (
@@ -991,6 +1097,43 @@ export default function App() {
               <span>{tabNames[k]}</span>
             </div>
           ))}
+        </div>
+        {/* Thread list */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '4px 8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, padding: '0 4px' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>对话历史</span>
+            <button onClick={createNewThread} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: 4, cursor: 'pointer', fontSize: 11, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 3 }} title="新建对话">
+              + 新建对话
+            </button>
+          </div>
+          {threads.map(t => (
+            <div key={t.id}
+              onClick={() => switchThread(t.id)}
+              onMouseEnter={(e) => { const el = (e.currentTarget as HTMLElement).querySelector('.thread-actions') as HTMLElement; if (el) el.style.display = 'inline'; }}
+              onMouseLeave={(e) => { const el = (e.currentTarget as HTMLElement).querySelector('.thread-actions') as HTMLElement; if (el) el.style.display = 'none'; }}
+              style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 12, marginBottom: 2,
+                background: activeThreadId === t.id ? 'var(--accent-glow)' : 'transparent',
+                color: activeThreadId === t.id ? 'var(--accent-light)' : 'var(--text-secondary)',
+                border: activeThreadId === t.id ? '1px solid rgba(108,92,231,0.3)' : '1px solid transparent',
+                display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.15s ease' }}>
+              {editingThreadTitle === t.id ? (
+                <input autoFocus defaultValue={t.title} style={{ flex: 1, fontSize: 12, padding: '1px 4px', background: 'var(--bg-tertiary)', border: '1px solid var(--accent)', borderRadius: 3, color: 'var(--text-primary)' }}
+                  onBlur={(e) => renameThread(t.id, (e.target as HTMLInputElement).value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') renameThread(t.id, (e.target as HTMLInputElement).value); }}
+                  onClick={(e) => e.stopPropagation()} />
+              ) : (
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+              )}
+              <span style={{ fontSize: 9, color: 'var(--text-muted)', flexShrink: 0 }}>{t.messages.length}</span>
+              <span className="thread-actions" style={{ display: 'none', flexShrink: 0 }}>
+                <span onClick={(e) => { e.stopPropagation(); setEditingThreadTitle(t.id); }} style={{ cursor: 'pointer', fontSize: 12, marginRight: 2 }} title="重命名">✏️</span>
+                <span onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }} style={{ cursor: 'pointer', fontSize: 12 }} title="删除">🗑️</span>
+              </span>
+            </div>
+          ))}
+          {threads.length === 0 && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '8px 4px', textAlign: 'center' }}>暂无对话历史</div>
+          )}
         </div>
       </div>
       {tab === 'chat' ? (
@@ -1022,7 +1165,7 @@ export default function App() {
               <div className="prompt-wrapper">
                 <textarea ref={inputRef} className="prompt-input" value={inputVal} onChange={e => setInputVal(e.target.value)}
                   onKeyDown={handleKeyDown} placeholder="描述你的任务... (Enter 发送, Shift+Enter 换行, 拖拽文件可上传)"
-                  rows={2} style={{ height: Math.min(120, Math.max(24, inputVal.split('\n').length * 22)) }} />
+                  rows={4} style={{ height: Math.min(200, Math.max(88, inputVal.split('\n').length * 22)) }} />
                 <div className="prompt-actions">
                   <button className="prompt-btn" onClick={() => fileInputRef.current?.click()} title="添加文件" style={{ fontSize:16, fontWeight:700 }}>＋</button>
                   <button className="prompt-btn send" onClick={() => handleSend()} disabled={(!inputVal.trim() && attachments.length===0) || sending}>▶</button>

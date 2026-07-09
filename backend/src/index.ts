@@ -11,6 +11,7 @@ import { createModelRoutes } from './routes/models';
 import { createTestingRoutes } from './routes/testing';
 import { createCodingRoutes } from './routes/coding';
 import { createExtensionRoutes } from './routes/extensions';
+import { createChatRoutes } from './routes/chat';
 import { ExtensionManager } from './services/extensions/extension-manager';
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/models', createModelRoutes(poolManager));
 app.use('/api/testing', createTestingRoutes(poolManager, wsManager.broadcast.bind(wsManager)));
 app.use('/api/coding', createCodingRoutes(poolManager, wsManager.broadcast.bind(wsManager), projectManager));
 app.use('/api/extensions', createExtensionRoutes(extManager));
+app.use('/api/chat', createChatRoutes(poolManager));
 app.get('/api/health', (_req, res) => { res.json({ status: 'ok', providers: poolManager.getAllProviders().length, ws: wsManager.getClientCount() }); });
 
 const PORT = process.env.PORT || 3001;
