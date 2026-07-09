@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid';
 const MAX_KEYS_PER_POOL = 50;
 /** Maximum number of provider pools total */
 const MAX_POOLS = 25;
-/** HTTP status codes that indicate auth/quota failure ¡ú immediate key removal */
+/** HTTP status codes that indicate auth/quota failure ï¿½ï¿½ immediate key removal */
 const EVICT_STATUS_CODES = new Set([401, 403]);
 
 export interface PoolStats {
@@ -24,7 +24,7 @@ export interface PoolStats {
 export class ApiPoolManager {
   private providers: Map<string, Provider> = new Map();
 
-  // ©¤©¤©¤ Provider management ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Provider management ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
   addProvider(provider: Provider): boolean {
     if (this.providers.has(provider.id)) {
@@ -48,7 +48,7 @@ export class ApiPoolManager {
     return Array.from(this.providers.values());
   }
 
-  // ©¤©¤©¤ Key management ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Key management ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
   /** Add API key to a provider (max 50 keys per provider) */
   addApiKey(providerId: string, key: string): ApiKeyEntry | null {
@@ -78,15 +78,32 @@ export class ApiPoolManager {
     return true;
   }
 
-  /** Get next available API key for a provider (round-robin with failover) */
+  /**
+   * Get next available API key for a provider (round-robin).
+   * Keys with recent failures are rotated to the end; auth/quota failures are evicted.
+   */
   getNextApiKey(providerId: string): ApiKeyEntry | null {
     const provider = this.providers.get(providerId);
     if (!provider || provider.apiKeys.length === 0) return null;
 
+    // Find first active key (failureCount 0 = best, but any active works)
     const activeKey = provider.apiKeys.find(k => k.isActive);
     if (activeKey) return activeKey;
 
     return null;
+  }
+
+  /**
+   * Move a key to the end of the pool (rotation on failure).
+   * This ensures failed keys get retried last after all others have been tried.
+   */
+  private rotateKeyToEnd(providerId: string, keyId: string): void {
+    const provider = this.providers.get(providerId);
+    if (!provider) return;
+    const idx = provider.apiKeys.findIndex(k => k.id === keyId);
+    if (idx === -1 || idx === provider.apiKeys.length - 1) return; // already last or not found
+    const [key] = provider.apiKeys.splice(idx, 1);
+    provider.apiKeys.push(key);
   }
 
   /**
@@ -107,13 +124,13 @@ export class ApiPoolManager {
 
     key.lastChecked = new Date().toISOString();
 
-    // Auth/quota failures ¡ú immediate eviction
+    // Auth/quota failures ï¿½ï¿½ immediate eviction
     if (statusCode !== undefined && EVICT_STATUS_CODES.has(statusCode)) {
       this.removeExhaustedKey(providerId, keyId);
       return provider.apiKeys.some(k => k.isActive) ? 'exhausted' : 'provider_exhausted';
     }
 
-    // Other failures ¡ú increment count, evict after 3
+    // Other failures ï¿½ï¿½ increment count, evict after 3
     key.failureCount++;
     if (key.failureCount >= 3) {
       key.isActive = false;
@@ -149,7 +166,7 @@ export class ApiPoolManager {
     }
   }
 
-  // ©¤©¤©¤ Stats ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Stats ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
   /** Get total key count for a provider */
   getKeyCount(providerId: string): number {
@@ -180,7 +197,7 @@ export class ApiPoolManager {
     return this.providers.size;
   }
 
-  // ©¤©¤©¤ Model lookups ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Model lookups ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
   /** Get all models across all providers, optionally filtered by type */
   getAvailableModels(type?: Model['type']): Model[] {
@@ -217,7 +234,7 @@ export class ApiPoolManager {
     return null;
   }
 
-  // ©¤©¤©¤ Persistence ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Persistence ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
   /** Export providers state (for persistence) */
   exportState(): Provider[] {
