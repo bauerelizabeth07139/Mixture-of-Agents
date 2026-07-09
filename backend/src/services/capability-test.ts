@@ -51,7 +51,7 @@ const TEST_CASES: TestCase[] = [
     name: 'Python������д',
     category: 'code',
     description: '��д��ȷ��Python������ʵ�־�ȷ�߼�',
-    prompt: '请用Python编写一个名为fizzbuzz的函数，输入整数n，返回从1到n的字符串列表：3的倍数返回"Fizz"，5的倍数返回"Buzz"，同时是3和5的倍数返回"FizzBuzz"，其余返回数字字符串。只返回函数代码。',
+    prompt: 'Write a Python function called "fizzbuzz" that takes an integer n and returns a list of strings from 1 to n where multiples of 3 become "Fizz", multiples of 5 become "Buzz", multiples of both become "FizzBuzz", others become the number as string. Return ONLY the function code.',
     maxTokens: 1200,
     evaluate: (r) => {
       let score = 0;
@@ -73,7 +73,7 @@ const TEST_CASES: TestCase[] = [
     name: 'Bug���',
     category: 'code',
     description: '�ڴ������ҳ���ȷ��Bug',
-    prompt: '以下Python函数用于返回第二大的数，但存在Bug。请找出Bug并用一句话给出修复方案：\n\ndef second_largest(nums):\n    unique = list(set(nums))\n    unique.sort()\n    return unique[-2]',
+    prompt: 'This Python function returns the second largest number. It has a bug. Find it:\n\ndef second_largest(nums):\n    unique = list(set(nums))\n    unique.sort()\n    return unique[-2]\n\nWhen does it fail? Give a one-sentence fix.',
     maxTokens: 800,
     evaluate: (r) => {
       let score = 0;
@@ -90,7 +90,7 @@ const TEST_CASES: TestCase[] = [
     name: '���ݽṹʵ��',
     category: 'code',
     description: 'ʵ��Python��С���࣬����insert��extract_min����',
-    prompt: '请用Python实现一个最小堆类，包含insert()和extract_min()方法。写一个测试：依次插入[3, 1, 5, 2, 4]，然后依次取出验证顺序。只返回代码。',
+    prompt: 'Implement a Python class for a min-heap with insert() and extract_min() methods. Include a test with 5 elements that inserts [3, 1, 5, 2, 4] and extracts all elements in order. Return ONLY the code.',
     maxTokens: 1500,
     evaluate: (r) => {
       let score = 0;
@@ -114,7 +114,7 @@ const TEST_CASES: TestCase[] = [
     name: '��ѧ����',
     category: 'reasoning',
     description: '�ಽ�������㣬Ҫ��ȷ��',
-    prompt: '一个长方形，长17.5厘米，宽8.4厘米。请计算：1)面积（平方厘米），2)周长（厘米），3)对角线长度（保留2位小数）。格式为：面积=X，周长=Y，对角线=Z',
+    prompt: 'A rectangle has length 17.5 cm and width 8.4 cm. Calculate: 1) Area in sq cm, 2) Perimeter in cm, 3) Diagonal in cm (2 decimal places). Give answers as: Area=X, Perimeter=Y, Diagonal=Z',
     maxTokens: 1000,
     evaluate: (r) => {
       let score = 0;
@@ -130,7 +130,7 @@ const TEST_CASES: TestCase[] = [
     name: '�߼�����',
     category: 'reasoning',
     description: '����߼���������',
-    prompt: '三个箱子分别标着"苹果"、"橘子"、"混合"，但所有标签都是错的。你从"混合"箱子中取出一个水果是苹果。请推断每个箱子实际装的是什么。格式：苹果箱=X，橘子箱=Y，混合箱=Z',
+    prompt: 'Three boxes labeled "Apples", "Oranges", "Mixed" ALL have wrong labels. You pick one fruit from the "Mixed" box and it is an apple. What fruit is in each box? Give answers as: Apples box=X, Oranges box=Y, Mixed box=Z',
     maxTokens: 1000,
     evaluate: (r) => {
       let score = 0;
@@ -147,7 +147,7 @@ const TEST_CASES: TestCase[] = [
     name: '�ಽ����',
     category: 'reasoning',
     description: '�ಽ����ѧ�������⣬��Ҫ�ֲ�����',
-    prompt: '一列火车9:00从A站出发，时速60公里。另一列火车10:00从B站（距A站300公里）出发，时速90公里朝A站行驶。两车何时相遇？请写出计算过程。',
+    prompt: 'A train leaves station A at 9:00 traveling 60km/h. Another train leaves station B (300km away) at 10:00 traveling 90km/h toward A. At what time do they meet? Show calculation.',
     maxTokens: 1200,
     evaluate: (r) => {
       let score = 0;
@@ -170,7 +170,7 @@ const TEST_CASES: TestCase[] = [
     name: '��ʽ��ѭ',
     category: 'instruction',
     description: '��ѭ�ض������ʽ',
-    prompt: '请严格按照以下格式回复，不要添加任何其他内容：\n名称: [你的模型名称]\n日期: [今天的日期 YYYY-MM-DD]\n能力: [一个词]\n计算: [7+8+9+10+11+12的和]\n除此之外不要输出任何内容。',
+    prompt: 'Respond with EXACTLY this format, no extra text:\nName: [your model name]\nDate: [today YYYY-MM-DD]\nCapability: [one word]\nCount: [sum of 7+8+9+10+11+12]\nNothing else.',
     maxTokens: 600,
     evaluate: (r) => {
       let score = 0;
@@ -189,18 +189,18 @@ const TEST_CASES: TestCase[] = [
     name: '����������',
     category: 'chat',
     description: '���Զ��ֶԻ��е������ı�������',
-    prompt: '请先告诉我法国的首都是哪里。然后在同一个回答中告诉我：你刚才给出的第一个答案是什么？回答格式：\n答案1: [首都]\n答案2: [你重复的第一个答案]',
+    prompt: 'First, tell me the capital of France. Then, in the SAME response, tell me: what was the first answer you just gave? Answer format:\nAnswer 1: [capital]\nAnswer 2: [your first answer repeated]',
     maxTokens: 600,
     evaluate: (r) => {
-      if (/答案1.*Paris|答案1.*巴黎|Answer\s*1.*Paris/i.test(r)) score += 3;
-      if (/答案2.*Paris|答案2.*巴黎|Answer\s*2.*Paris/i.test(r)) score += 4;
+      let score = 0;
+      if (/Answer\s*1:\s*Paris/i.test(r)) score += 3;
       if (/Answer\s*2:.*Paris/i.test(r)) score += 4;
       if (/Paris/i.test(r)) score += 1;
       const lines = r.trim().split('\n').filter(l => l.trim().length > 0);
       if (lines.length <= 5) score += 1;
       if (/capital|France/i.test(r)) score += 1;
       score = Math.min(10, score);
-      return { score, details: score >= 8 ? '�����ı�����ȷ' : score >= 4 ? '���ֱ���������' : '�����Ķ�ʧ' };
+      return { score, details: score >= 8 ? 'Maintained context correctly' : score >= 4 ? 'Partial context maintained' : 'Context lost' };
     },
   },
   {
@@ -208,7 +208,7 @@ const TEST_CASES: TestCase[] = [
     name: '����ָ����ѭ',
     category: 'instruction',
     description: '��ѭ�����Ҿ�ȷ��ָ��Ҫ��',
-    prompt: '请列出50到100之间恰好5个质数，按从大到小排列，用逗号分隔。不要解释。',
+    prompt: 'List exactly 5 prime numbers between 50 and 100, in descending order, separated by commas. No explanation.',
     maxTokens: 400,
     evaluate: (r) => {
       let score = 0;
@@ -244,7 +244,7 @@ const TEST_CASES: TestCase[] = [
     name: '��Ӧ�ٶȲ���',
     category: 'speed',
     description: '�򵥻��Բ��ԣ�������Ӧ�ӳ�',
-    prompt: '请只回复"echo"这个词，不要输出任何其他内容。',
+    prompt: 'Respond with ONLY the word "echo" and nothing else.',
     maxTokens: 50,
     evaluate: (_r, latencyMs) => {
       let score = 0;
@@ -290,7 +290,7 @@ const TEST_CASES: TestCase[] = [
     name: '���ٴ������',
     category: 'code',
     description: '��д�򵥵�Python FizzBuzz����',
-    prompt: '请用Python编写一个名为fizzbuzz的函数，输入整数n，返回从1到n的字符串列表：3的倍数返回"Fizz"，5的倍数返回"Buzz"，同时是3和5的倍数返回"FizzBuzz"，其余返回数字字符串。只返回函数代码。',
+    prompt: 'Write a Python function called "fizzbuzz" that takes an integer n and returns a list of strings from 1 to n where multiples of 3 become "Fizz", multiples of 5 become "Buzz", multiples of both become "FizzBuzz", others become the number as string. Return ONLY the function code.',
     maxTokens: 1200,
     evaluate: (r) => {
       let score = 0;
@@ -312,7 +312,7 @@ const TEST_CASES: TestCase[] = [
     name: '������ѧ����',
     category: 'reasoning',
     description: '������ѧ����',
-    prompt: '347 + 258等于多少？只回答数字。',
+    prompt: 'What is 347 + 258? Give only the number.',
     maxTokens: 200,
     evaluate: (r) => {
       let score = 0;
@@ -326,7 +326,7 @@ const TEST_CASES: TestCase[] = [
     name: '���ٸ�ʽ����',
     category: 'instruction',
     description: '��ѭ�������ʽ',
-    prompt: '请严格按照以下格式回复，不要添加任何其他内容：\n名称: [你的模型名称]\n日期: [今天的日期 YYYY-MM-DD]\n能力: [一个词]\n计算: [7+8+9+10+11+12的和]\n除此之外不要输出任何内容。',
+    prompt: 'Respond with EXACTLY this format, no extra text:\nName: [your model name]\nDate: [today YYYY-MM-DD]\nCapability: [one word]\nCount: [sum of 7+8+9+10+11+12]\nNothing else.',
     maxTokens: 600,
     evaluate: (r) => {
       let score = 0;
@@ -345,7 +345,7 @@ const TEST_CASES: TestCase[] = [
     name: '���ٻ��Բ���',
     category: 'speed',
     description: '�򵥻��Բ���',
-    prompt: '请只回复"echo"这个词，不要输出任何其他内容。',
+    prompt: 'Respond with ONLY the word "echo" and nothing else.',
     maxTokens: 50,
     evaluate: (_r, latencyMs) => {
       let score = 0;
@@ -412,11 +412,11 @@ export class CapabilityTestEngine {
         // Multimodal test with image
         const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg';
         messages = [
-          { role: 'system', content: '你是一个有用的助手。请严格按照指令回答。' },
+          { role: 'system', content: 'You are a helpful assistant. Follow instructions precisely.' },
           {
             role: 'user',
             content: [
-              { type: 'text', text: '请描述这张图片。说明：1) 主要物体，2) 主要颜色，3) 不同物体的大致数量。' },
+              { type: 'text', text: 'Describe this image. State: 1) main object, 2) dominant color, 3) approximate count of distinct objects.' },
               { type: 'image_url', image_url: { url: imageUrl } },
             ],
           },
@@ -424,14 +424,14 @@ export class CapabilityTestEngine {
       } else if (test.id === 'chat-1b') {
         // Multi-turn context test: send two messages
         messages = [
-          { role: 'system', content: '你是一个有用的助手。请严格按照指令回答。' },
+          { role: 'system', content: 'You are a helpful assistant. Follow instructions precisely.' },
           { role: 'user', content: 'What is the capital of France?' },
           { role: 'assistant', content: 'The capital of France is Paris.' },
           { role: 'user', content: test.prompt },
         ];
       } else {
         messages = [
-          { role: 'system', content: '你是一个有用的助手。请严格按照指令回答。' },
+          { role: 'system', content: 'You are a helpful assistant. Follow instructions precisely.' },
           { role: 'user', content: test.prompt },
         ];
       }
@@ -598,7 +598,7 @@ export class CapabilityTestEngine {
             content: [
               {
                 type: 'text',
-                text: '请描述这张图片。说明：1) 主要物体，2) 主要颜色，3) 不同物体的大致数量。',
+                text: 'Describe this image. State: 1) main object, 2) dominant color, 3) approximate count of distinct objects.',
               },
               { type: 'image_url', image_url: { url: imageUrl } },
             ] as any,
