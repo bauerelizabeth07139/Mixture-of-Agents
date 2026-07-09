@@ -423,6 +423,63 @@ function ModelPanel({ providers }: { providers: Provider[] }) {
 }
 // ─── Testing Panel (Chinese UI with Quick/Standard modes) ───
 function TestingPanel({ providers }: { providers: Provider[] }) {
+  // 测试名中文映射
+  const TEST_NAME_CN: Record<string, string> = {
+    'Python Function': 'Python函数编写',
+    'Bug Detection': 'Bug检测',
+    'Data Structure': '数据结构实现',
+    'Math Calculation': '数学计算',
+    'Logic Puzzle': '逻辑推理',
+    'Multi-step Reasoning': '多步推理',
+    'Format Following': '格式遵循',
+    'Word Count': '字数统计',
+    'Multi-turn Context': '多轮上下文',
+    'Complex Instruction': '复杂指令遵循',
+    'Simple Q&A Speed': '简单问答速度',
+    'Vision Description': '视觉描述能力',
+    'Echo Test': '指令回显测试',
+    'Quick Code': '快速代码测试',
+    'Quick Math': '快速数学计算',
+    'Quick Format': '快速格式遵循',
+    'Quick Speed': '快速响应测试',
+  };
+  const cn = (name: string) => TEST_NAME_CN[name] || name;
+  const DETAIL_CN: Record<string, string> = {
+    'Correct FizzBuzz': 'FizzBuzz实现正确',
+    'Partial': '部分正确',
+    'Incorrect': '实现错误',
+    'Found the edge case bug': '找到了边界条件Bug',
+    'Did not find the real bug': '未找到真正Bug',
+    'All correct': '全部正确',
+    'Correct deduction': '推理正确',
+    'Exact format match': '格式完全匹配',
+    'Word count correct': '字数正确',
+    'Maintained context': '保持了上下文',
+    'Good instruction following': '指令遵循良好',
+    'Fast response': '响应速度快',
+    'Correct echo': '正确回复echo',
+    'No extra content': '无多余内容',
+    'Fast and correct': '快速且正确',
+    'Good description': '描述准确',
+    'Minimal description': '描述简略',
+    'Weak or no description': '描述不足或无描述',
+    'Good heap implementation': '最小堆实现正确',
+    'Partial implementation': '部分正确',
+    'Incorrect implementation': '实现错误',
+    'Found multi-step reasoning': '找到多步推理',
+    'Partial reasoning': '部分推理',
+    'Good context maintenance': '上下文维护良好',
+    'Partial context maintained': '部分上下文',
+    'Context lost': '上下文丢失',
+    'Strong instruction following': '指令遵循良好',
+    'Partial instruction following': '部分遵循',
+    'Audio capability detected': '检测到音频能力',
+    'Limited audio capability': '有限音频能力',
+    'No audio support': '不支持音频',
+  };
+  const cnDetail = (d: string) => DETAIL_CN[d] || d;
+
+
   const allModels = providers.flatMap(p => p.models.filter(m => (m.type === 'llm' || m.type === 'vlm')).map(m => ({ ...m, pName: p.name, pIcon: p.icon, provId: p.id })));
   const [scope, setScope] = useState<'single' | 'provider' | 'all'>('single');
   const [selectedModel, setSelectedModel] = useState('');
@@ -625,7 +682,7 @@ function TestingPanel({ providers }: { providers: Provider[] }) {
           {r.results?.map((t: any, j: number) => (
             <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', fontSize: 12 }}>
               <span className={`badge ${t.score >= 7 ? 'badge-success' : t.score >= 4 ? 'badge-warning' : 'badge-error'}`}>{t.score}/10</span>
-              <span style={{ flex: 1 }}>{t.testName}</span>
+              <span style={{ flex: 1 }}>{cn(t.testName)}</span>
               <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{t.latencyMs}ms</span>
             </div>
           ))}
