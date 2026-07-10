@@ -90,11 +90,16 @@ export function createChatRoutes(pool: ApiPoolManager) {
 
       messages.push({ role: 'user', content: userContent });
 
+      // Map thinkingMode to thinkingEffort
+      const effortMap: Record<string, 'none'|'low'|'medium'|'high'> = { low: 'none', medium: 'low', high: 'medium' };
+      const thinkingEffort = thinkingMode === 'auto' ? 'medium' : (effortMap[thinkingMode] || 'low');
+
       const resp = await LLMClient.chatCompletion(provider, apiKey, {
         messages,
         model: model.modelId,
-        temperature: 0.7,
+        temperature: thinkingEffort === 'high' ? 0.3 : 0.7,
         maxTokens: 4096,
+        thinkingEffort,
       });
 
       res.json({
