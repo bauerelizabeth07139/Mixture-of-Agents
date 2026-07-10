@@ -80,6 +80,68 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+.sidebar-logo {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.sidebar-nav {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-item {
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  letter-spacing: 0.2px;
+  position: relative;
+  overflow: hidden;
+}
+.sidebar-item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  opacity: 0;
+  transform: scaleY(0);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.sidebar-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+.sidebar-item:hover::before {
+  opacity: 0.4;
+  transform: scaleY(0.6);
+}
+.sidebar-item:active {
+  transform: translateX(2px) scale(0.98);
+}
+.sidebar-item.active {
+  background: var(--accent-glow);
+  color: var(--accent-light);
+  font-weight: 550;
+}
+.sidebar-item.active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
 .sidebar-brand { justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
