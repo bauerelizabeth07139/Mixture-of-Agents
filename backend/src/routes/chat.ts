@@ -161,6 +161,7 @@ export function createChatRoutes(pool: ApiPoolManager) {
         usage: resp.usage,
         contextCompressed: compressedHistory.length < (history || []).length,
         historySize: (history || []).length,
+        thinkingMode: thinkingEffort,
         codeExecution: execResults.length > 0 ? execResults : undefined,
       });
     } catch (err: any) {
