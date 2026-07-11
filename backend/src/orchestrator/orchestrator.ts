@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+﻿import { v4 as uuid } from 'uuid';
 import { Project, SubAgent, SubAgentTask, Model, Provider, UserPreferences } from '../types';
 import { ApiPoolManager } from '../providers/api-pool';
 import { LLMClient, QuotaExhaustedError } from '../services/llm-client';
@@ -28,6 +28,7 @@ export class Orchestrator {
     this.extensionManager = extensionManager || null;
   }
 
+  onEvent(cb: OrchestratorEventCallback) { this.eventCallback = cb; }
   /** Map user thinking preference to LLM thinking effort */
   
   /** Resolve the actual thinking level for a sub-agent */
@@ -43,7 +44,6 @@ export class Orchestrator {
     return map[mode] || 'low';
   }
 
-  onEvent(cb: OrchestratorEventCallback) { this.eventCallback = cb; }
   private emit(event: string, data: any) { this.eventCallback?.(event, data); }
 
   async execute(): Promise<void> {
@@ -135,7 +135,7 @@ export class Orchestrator {
             { role: 'system', content: buildThinkingPrefix(this.resolveThinkingLevel(thinkingLevel)) + CODING_SUBAGENT_PROMPT + (ctx ? '\n\nContext:\n' + ctx : '') },
             { role: 'user', content: 'Task: ' + desc + '\nProject base: ' + this.codingEngine.getBasePath() },
           ],
-          model: model.modelId, temperature: 0.2, maxTokens: 4096, thinkingEffort: this.getThinkingEffort(),
+          model: model.modelId, temperature: 0.2, maxTokens: 4096,
         });
 
         if (!resp.content || resp.content.trim().length < 1) {
@@ -186,7 +186,28 @@ export class Orchestrator {
           }
         }
 
-        const codingTask = this.codingEngine.createTask(desc, 'project-' + task.id.slice(0, 8));
+              // Map bash/sh commands to PowerShell on Windows
+      if (process.platform === 'win32' && plan?.steps) {
+        for (const step of plan.steps) {
+          if (step.action === 'run_command' && step.params?.command) {
+            let cmd = step.params.command;
+            cmd = cmd.replace(/^mkdir -p\s+/i, 'New-Item -ItemType Directory -Force -Path ');
+            cmd = cmd.replace(/^rm -rf\s+/i, 'Remove-Item -Recurse -Force -Path ');
+            cmd = cmd.replace(/^cat\s+/i, 'Get-Content ');
+            cmd = cmd.replace(/^ls\s*/i, 'Get-ChildItem ');
+            cmd = cmd.replace(/^echo\s+/i, 'Write-Host ');
+            cmd = cmd.replace(/^touch\s+/i, 'New-Item -ItemType File -Force -Path ');
+            cmd = cmd.replace(/^cp\s+/i, 'Copy-Item ');
+            cmd = cmd.replace(/^mv\s+/i, 'Move-Item ');
+            if (cmd.startsWith('bash ') || cmd.startsWith('sh ')) {
+              cmd = 'powershell -Command "' + cmd.replace(/^bash\s+|sh\s+/, '').replace(/^"|"$/g, '') + '"';
+            }
+            step.params.command = cmd;
+          }
+        }
+      }
+
+      const codingTask = this.codingEngine.createTask(desc, 'project-' + task.id.slice(0, 8));
         await this.codingEngine.executePlan(plan, codingTask);
 
         const failedSteps = codingTask.results.filter(r => !r.success);
@@ -259,7 +280,7 @@ export class Orchestrator {
             { role: 'user', content: desc },
           ],
           model: this.getModelIdForAgent(task.assignedModel),
-          temperature: 0.3, maxTokens: 4096, thinkingEffort: this.getThinkingEffort(),
+          temperature: 0.3, maxTokens: 4096,
         });
 
         if (!resp.content || resp.content.trim().length < 1) {
@@ -394,7 +415,7 @@ export class Orchestrator {
             { role: "user", content: prompt },
           ],
           model: this.getModelIdForAgent(m.model.id),
-          temperature: 0.2, maxTokens: 4096, thinkingEffort: this.getThinkingEffort(),
+          temperature: 0.2, maxTokens: 4096,
         });
         return resp.content;
       } catch (error: any) {

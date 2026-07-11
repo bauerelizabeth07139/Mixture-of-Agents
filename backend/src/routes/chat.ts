@@ -90,16 +90,21 @@ export function createChatRoutes(pool: ApiPoolManager) {
 
       messages.push({ role: 'user', content: userContent });
 
-      // Map thinkingMode to thinkingEffort
-      const effortMap: Record<string, 'none'|'low'|'medium'|'high'> = { low: 'none', medium: 'low', high: 'medium' };
-      const thinkingEffort = thinkingMode === 'auto' ? 'medium' : (effortMap[thinkingMode] || 'low');
+      // Map thinkingMode to LLM reasoning effort
+      const effortMap: Record<string, string> = { low: 'low', medium: 'medium', high: 'high', auto: 'medium' };
+      const effectiveThinking = orchestratorThinkingMode || thinkingMode || 'medium';
+      const resolvedThinking = effortMap[effectiveThinking] || 'medium';
+      const systemPrefix = resolvedThinking === 'high' ? '[Deep analysis mode. Consider all angles, edge cases, and dependencies.]\n\n'
+        : resolvedThinking === 'low' ? '[Quick response. Be concise and direct.]\n\n'
+        : '';
+      if (systemPrefix) messages[0].content = systemPrefix + messages[0].content;
 
       const resp = await LLMClient.chatCompletion(provider, apiKey, {
         messages,
         model: model.modelId,
-        temperature: thinkingEffort === 'high' ? 0.3 : 0.7,
+        temperature: 0.7,
         maxTokens: 4096,
-        thinkingEffort,
+        thinkingEffort: resolvedThinking as any,
       });
 
       // Detect and execute code blocks in response
@@ -135,6 +140,7 @@ export function createChatRoutes(pool: ApiPoolManager) {
               else if (ext === '.js') cmd = `node "${filePath}"`;
               else if (ext === '.ts') cmd = `npx ts-node "${filePath}"`;
               else if (ext === '.ps1') cmd = `powershell -File "${filePath}"`;
+              else if (process.platform === 'win32') cmd = `powershell -File "${filePath}"`;
               else cmd = `bash "${filePath}"`;
               
               const extraPath = process.platform === 'win32'
@@ -161,7 +167,7 @@ export function createChatRoutes(pool: ApiPoolManager) {
         usage: resp.usage,
         contextCompressed: compressedHistory.length < (history || []).length,
         historySize: (history || []).length,
-        thinkingMode: thinkingEffort,
+        thinkingMode: resolvedThinking,
         codeExecution: execResults.length > 0 ? execResults : undefined,
       });
     } catch (err: any) {
