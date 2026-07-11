@@ -39,7 +39,7 @@ export function createChatRoutes(pool: ApiPoolManager) {
 
   r.post('/', async (req, res) => {
     try {
-      const { message, modelId, attachments, thinkingMode, costEfficiencyRatio, history } = req.body;
+      const { message, modelId, attachments, orchestratorThinkingMode, agentThinkingMode, thinkingMode, costEfficiencyRatio, history } = req.body;
       if (!message && (!attachments || attachments.length === 0)) {
         return res.status(400).json({ error: 'Empty message' });
       }
