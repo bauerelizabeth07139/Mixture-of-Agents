@@ -1,4 +1,4 @@
-﻿/* Mixture of Agents ??Codex/Claude Code inspired theme */
+/* Mixture of Agents ??Codex/Claude Code inspired theme */
 :root {
   --bg-primary: #0a0a0f;
   --bg-secondary: #12121a;
@@ -351,7 +351,7 @@ body {
   gap: 12px;
   padding: 6px 4px 0;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .prompt-meta-chip {
   display: inline-flex;
@@ -361,9 +361,10 @@ body {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 12px;
-  font-size: 10px;
+  font-size: 11px;
   cursor: pointer;
   transition: var(--transition);
+  color: var(--text-secondary);
 }
 .prompt-meta-chip:hover { border-color: var(--accent); color: var(--accent-light); }
 
@@ -393,8 +394,8 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--text-muted);
   margin-bottom: 10px;
+  color: var(--text-secondary);
 }
 .settings-row {
   display: flex;
@@ -403,7 +404,11 @@ body {
   padding: 6px 0;
   font-size: 13px;
 }
-.settings-row label { color: var(--text-secondary); font-size: 12px; margin-bottom: 0; }
+.settings-row label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 0;
+}
 
 /* Welcome screen */
 .welcome-screen {
@@ -499,6 +504,8 @@ label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: 
 .badge-error { background: var(--error-bg); color: var(--error); }
 .badge-info { background: var(--info-bg); color: var(--info); }
 .badge-accent { background: var(--accent-glow); color: var(--accent-light); }
+.badge-purple { background: rgba(179,136,255,0.15); color: #b388ff; }
+.badge-orange { background: rgba(255,152,0,0.15); color: #ff9800; }
 .badge-primary { background: rgba(139,92,246,0.15); color: #a78bfa; }
 
 /* Slider */
@@ -704,6 +711,18 @@ label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: 
   transition: all 0.15s;
 }
 .fm-tpl-btn:hover {
+
+
+/* ===== Editor - Changed Line Highlighting ===== */
+.changed-line-highlight {
+  background: rgba(240, 160, 48, 0.08) !important;
+}
+.changed-line-glyph {
+  background: #f0a030;
+  width: 4px !important;
+  border-radius: 2px;
+  margin-left: 2px;
+}
   background: var(--accent-bg, rgba(88,166,255,0.15));
   border-color: var(--accent, #58a6ff);
   color: var(--accent, #58a6ff);

@@ -1,4 +1,4 @@
-export type ModelCapability = 'code' | 'agent' | 'chat' | 'multimodal' | 'reasoning' | 'fast';
+﻿export type ModelCapability = 'code' | 'agent' | 'chat' | 'multimodal' | 'reasoning' | 'fast';
 
 export interface ModelCapabilityProfile {
   code: number; agent: number; chat: number; context: number; speed: number; multimodal: boolean;
