@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from './services/api';
 import type { Provider, ProviderPreset, Model, McpPreset, SkillPreset, McpServerConfig, SkillConfig, Project } from './types';
 // TerminalPanel merged into Editor
@@ -275,10 +275,10 @@ function SettingsPanel({ providers, ratio, setRatio, orchThinking, setOrchThinki
         </div>
       </div>
       <div className="settings-section">
-          <div className="settings-section-title">宏观调控模型 思考强度 子代理分配</div>
+          <div className="settings-section-title">子代理 思考强度</div>
         <div style={{ display: "flex", gap: 6 }}>
           {["auto", "low", "medium", "high"].map(m => (
-            <button key={m} className={`btn btn-sm ${agentThinking === m ? "btn-primary" : ""}`}
+            <button key={m} className={`btn btn-sm ${agentThinking} === m ? "btn-primary" : ""}`}
               onClick={() => setAgentThinking(m as any)} style={{ flex: 1 }}>
               {m === "auto" ? "自动" : m === "low" ? "低" : m === "medium" ? "中" : "高"}
             </button>
@@ -1192,10 +1192,6 @@ export default function App() {
         reader.readAsDataURL(file);
       }
     });
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(Array.from(e.target.files));
-    e.target.value = '';
-  }, [processFiles]);
   }, []);
 
   const selectedModelSupportsVision = useCallback(() => {
@@ -1386,8 +1382,7 @@ const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.
                   onKeyDown={handleKeyDown} placeholder="输入消息..."
                   rows={4} style={{ height: Math.min(200, Math.max(88, inputVal.split('\n').length * 22)) }} />
                 <div className="prompt-actions">
-                  <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display:'none' }} onChange={handleFileSelect} />
-                  <button className="prompt-btn upload" onClick={() => fileInputRef.current?.click()} style={{ fontSize:18, fontWeight:700 }} title="上传文件">+</button>
+                  <button className="prompt-btn" onClick={() => fileInputRef.current?.click()} style={{ fontSize:18, fontWeight:700, color:'var(--accent)' }} title="上传文件">＋</button>
                   <button className="prompt-btn" onClick={() => setInputVal("")} style={{ fontSize:16, fontWeight:700 }} title="清空输入">✕</button>
                   <button className="prompt-btn send" onClick={() => handleSend()} disabled={(!inputVal.trim() && attachments.length===0) || sending}>➤</button>
                 </div>
