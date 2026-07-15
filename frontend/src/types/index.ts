@@ -74,6 +74,6 @@ export interface TestProgress {
   scope: 'single' | 'provider' | 'all';
 }
 export interface AgentModelAssignment {
-  taskType: 'code' | 'agent' | 'chat' | 'general' | 'reasoning';
+  taskType: 'code' | 'agent' | 'chat' | 'general' | 'reasoning' | 'vision' | 'tts' | 'stt' | 'image';
   modelId: string;
 }
