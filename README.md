@@ -1,106 +1,172 @@
-﻿# Mixture of Agents (MoA)
+﻿<div align="center">
 
-Multi-model collaborative agent system driven by intelligent scheduling engine.
+# ⚛️ Mixture of Agents — Web
 
-![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-blue)
-![Node](https://img.shields.io/badge/node.js-18+-339933)
-![License](https://img.shields.io/badge/license-MIT-green)
+### Intelligent Multi-Model Agent System Built on Claude Code Architecture
 
-## Core Features
+### 基于 Claude Code 架构的多模型智能代理 Web 系统
 
-- Intelligent scheduling engine with adaptive task decomposition
-- Multi-model collaboration across same/different API keys
-- Cost/efficiency control slider (0 = efficiency, 1 = cost)
-- API pool management: up to 50 keys per URL with auto-failover
-- Context library: question bank (50) + sub-agent strategy library
-- Capability testing: 8 standardized tests
-- Dark/Light theme: Codex-style UI
+---
 
-## Quick Start
+![Platform](https://img.shields.io/badge/platform-Web%20%2B%20Node.js-ff6b9d?style=for-the-badge)
+![Node](https://img.shields.io/badge/node.js-20+-339933?style=for-the-badge)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18-61dafb?style=for-the-badge)
+![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
-Prerequisites: Node.js 18+
+*Web-based multi-model AI agent system with collaborative chat, model testing, MCP/Skill extensions, and automated code execution.*
+
+*基于 Web 的多模型 AI 代理系统，集成协作对话、模型测试、MCP/Skill 扩展和自动化代码执行。*
+
+*For the Desktop (EXE) version, see [Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)*
+
+<br/>
+
+[English](#-features) · [中文](#-核心特性) · [Quick Start / 快速开始](#-quick-start--快速开始) · [API Reference / API 参考](#-api-reference--api-参考)
+
+</div>
+
+---
+
+## ✨ Features
+
+### 🤖 Multi-Model Collaborative Chat
+- **Orchestrator Model** analyzes tasks, dispatches sub-agents with different models
+- **Global thinking intensity**: Low / Medium / High / Auto
+- Orchestrator and sub-agent thinking strength configured independently
+- **Context compression** for long conversations
+- SSE streaming responses
+- DeepSeek-style cache-friendly message formatting
+
+### 🧪 Model Capability Testing
+- **Quick Test** (~3 min) and **Standard Test** (~12 min)
+- 8 dimensions: Coding, Reasoning, Math, Creative Writing, Instruction Following, Tool Use, Multilingual, Context
+- **10-point scale** with linear time-based fitting and correctness coefficients
+- Automatic multimodal detection (Vision / Audio) via API testing
+
+### 🔌 Provider & Model Management
+- **17 preset providers** with API pool management
+- Max 80 concurrent requests per key, automatic rotation
+- Rate limit handling (429/401/403) with key pool management
+- One-click model fetch with capability detection
+
+### 🧩 Extension System
+- **28 MCP Server** presets (Filesystem, GitHub, Search, Database, AI, Cloud...)
+- **27 Skill Server** presets (stdio / HTTP transport)
+- **15 Expert/Skill** presets
+
+### 📝 Code Editor
+- Monaco Editor with file tree, smart templates (14 languages)
+- One-click code execution
+- Change highlighting and command bar
+
+---
+
+## 🚀 Quick Start / 快速开始
+
+### From Source / 从源码构建
 
 ```bash
+# Clone / 克隆
 git clone https://github.com/bauerelizabeth07139/Mixture-of-Agents.git
 cd Mixture-of-Agents
 
-# Start backend
-cd backend && npm install && npm run dev
+# Install / 安装
+npm install
 
-# Start frontend (new terminal)
-cd frontend && npm install && npm run dev
+# Build / 构建
+cd frontend && npm install && npm run build && cd ..
+cd backend && npm install && npm run build && cd ..
+
+# Start / 启动
+cd backend && npm start
+# Open http://localhost:3001
 ```
 
-### Windows one-click start
+### Development Mode / 开发模式
 
-```powershell
-powershell -ExecutionPolicy Bypass -File start.ps1
+```bash
+# Terminal 1: Backend
+cd backend && npm run dev
+
+# Terminal 2: Frontend
+cd frontend && npm run dev
 ```
 
-## Configure API Key
+---
 
-Manage API Keys via the Web UI:
+## 🔌 API Reference
 
-1. Go to Providers page
-2. Select a provider (MiMo, OpenAI, DeepSeek, etc.)
-3. Add your API Key
-4. Click Fetch Models to discover available models
+| Endpoint / 端点 | Method | Description / 描述 |
+|----------------|--------|---------------------|
+| `/api/health` | GET | Health check / 健康检查 |
+| `/api/providers` | GET/POST | Provider CRUD / 提供商管理 |
+| `/api/providers/:id/fetch-models` | POST | Fetch models from provider / 获取模型列表 |
+| `/api/providers/:id/test` | POST | Test provider connectivity / 测试连接 |
+| `/api/chat/send` | POST | Send chat message (SSE) / 发送对话 |
+| `/api/models` | GET | List all models / 列出所有模型 |
+| `/api/models/capabilities/:id` | GET | Model capabilities / 模型能力 |
+| `/api/testing/run` | POST | Run model test / 运行模型测试 |
+| `/api/testing/provider/:id` | POST | Test all models in provider / 测试提供商全部模型 |
+| `/api/testing/all` | POST | Test all models / 测试全部模型 |
+| `/api/projects/files` | GET | List project files / 列出项目文件 |
+| `/api/projects/file` | GET/PUT | Read/write file / 读写文件 |
+| `/api/projects/run` | POST | Execute code file / 执行代码文件 |
+| `/api/extensions/mcp` | GET/POST | MCP server management / MCP 服务器管理 |
+| `/api/extensions/skill` | GET/POST | Skill management / 技能管理 |
+| `/api/extensions/skill-server` | GET/POST | Skill server management / 技能服务器管理 |
 
-## MIMO API Key Test Results
+---
 
-| Model | Status | Description |
-|-------|--------|-------------|
-| mimo-v2.5 | Available | Full-modal model with reasoning |
-| mimo-v2.5-pro | Available | Reasoning flagship model |
-| mimo-v2.5-tts | Available | Text-to-Speech |
-| mimo-v2.5-asr | Available | Speech recognition |
+## 🏗 Architecture / 架构
 
-API endpoint: https://api.xiaomimimo.com/v1
-
-## Preset Providers (17)
-
-OpenAI, DeepSeek, Zhipu AI, Moonshot, SiliconFlow, StepFun, Volcengine, MiniMax, Qwen, Baidu, iFlytek, Baichuan, LingYiwanWu, Tencent, MiMo, Anthropic, Local/Ollama
-
-## Architecture
-
-```text
-        Intelligent Scheduling Engine (Macro Orchestrator)
-       /      |       |       \
-  Code Agent  Reasoning  Chat  Multimodal
 ```
-
-### Scheduling Protocol
-
-1. Task decomposition: assign sub-agents by capability
-2. Failure evaluation: retry / switch_model / abort
-3. Context awareness: reference question bank to avoid duplication
-4. Result aggregation: synthesize, remove contradictions, fill gaps
-5. No compromise: exhaust all options before marking failure
-
-## Tech Stack
-
-- Frontend: React 18 + TypeScript + Vite
-- Backend: Express + TypeScript + WebSocket
-- Theme: Codex-style dark/light toggle
-- Real-time: WebSocket for task progress
-
-## Project Structure
-
-```text
 Mixture-of-Agents/
-├── backend/                 # Express backend
-│   └── src/
-│       ├── orchestrator/    # Scheduling engine
-│       ├── providers/       # API pool + 17 presets
-│       ├── services/        # LLM client, testing, coding engine
-│       └── routes/          # API routes
-├── frontend/                # React frontend
-│   └── src/
-│       ├── App.tsx          # Main UI
-│       └── styles/          # Codex-style themes
-└── start.ps1                # Windows launcher
+├── frontend/                    # React + TypeScript + Vite
+│   ├── src/
+│   │   ├── App.tsx              # Main application
+│   │   ├── components/          # Editor, File Manager, Terminal
+│   │   ├── services/api.ts      # API client
+│   │   └── types.ts
+│   └── dist/                    # Built frontend
+│
+├── backend/                     # Express.js + TypeScript
+│   ├── src/
+│   │   ├── index.ts             # Server entry
+│   │   ├── providers/           # API pool & presets (17 providers)
+│   │   ├── routes/              # REST + SSE endpoints
+│   │   └── services/            # Project, Extension, Code execution
+│   └── public/                  # Static frontend files
+│
+└── README.md
 ```
 
-## License
+---
 
-MIT
+## 📋 Changelog / 更新日志
+
+### v1.0.0 (Latest)
+- ✅ Multi-model chat with orchestrator
+- ✅ 17 preset providers with API pool
+- ✅ 8-dimension model testing (10-point scale)
+- ✅ 28 MCP + 27 Skill + 15 Expert presets
+- ✅ Monaco-based code editor
+- ✅ Multimodal detection
+- ✅ Context compression & cache optimization
+
+---
+
+## 📄 License
+
+MIT License © 2025
+
+---
+
+<div align="center">
+
+**For the Desktop (EXE) version → [Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)**
+
+*For the Web version → You are here*
+
+</div>
