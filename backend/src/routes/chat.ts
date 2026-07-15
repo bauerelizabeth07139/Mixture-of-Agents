@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+﻿import { v4 as uuid } from 'uuid';
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import os from 'os';
@@ -350,7 +350,7 @@ function collectCommands(blocks: ExtractedCodeBlock[], dollarCommands: string[])
 }
 
 // ============================================================
-// Command execution �?ONE BY ONE like Claude Code
+// Command execution 锟?ONE BY ONE like Claude Code
 // ============================================================
 
 function getCmdTimeout(cmd: string): number {
@@ -434,7 +434,7 @@ function runCommandsSequentially(
       if (fs.existsSync(resolved)) currentCwd = resolved;
     }
 
-    // Stop on failure �?error recovery loop will handle retries
+    // Stop on failure 锟?error recovery loop will handle retries
     if (result.exitCode !== 0) break;
     
     // Brief pause after server start to let it initialize
@@ -831,3 +831,7 @@ export function createChatRoutes(pool: ApiPoolManager) {
 
   return r;
 }
+
+
+
+
