@@ -448,7 +448,7 @@ function ProviderPanel({ providers, onRefresh }: { providers: Provider[]; onRefr
                       color: k.isActive ? 'var(--success)' : 'var(--error)',
                       border: `1px solid ${k.isActive ? 'var(--success)' : 'var(--error)'}`
                     }}>
-                      {k.isActive ? '✅' : '❌'} {k.key.slice(0, 8)}...
+                      {k.isActive ? '✅' : '❌'} {k.key.slice(0, 8)}... {(k as any).concurrentRequests > 0 ? '(' + (k as any).concurrentRequests + '/80)' : ''}
                     </span>
                   ))}
                 </div>
