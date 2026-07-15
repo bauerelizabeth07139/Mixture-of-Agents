@@ -28,7 +28,7 @@
 
 <br>
 
-[🌐 **Web Version**](#top) · [🖥️ **Desktop Version (EXE)**](../../Mixture-of-Agents-Desktop) · [📦 **中文文档**](#chinese-doc)
+[🌐 **Web Version**](#top) · [🖥️ **Desktop Version (EXE)**](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop) · [📦 **中文文档**](#chinese-doc)
 
 ---
 
@@ -319,7 +319,7 @@ cd frontend && npm run dev
 
 <br>
 
-> 👉 See **[Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)** for download or build instructions.
+> 👉 See **[Mixture-of-Agents-Desktop](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop)** for download or build instructions.
 
 </details>
 
@@ -613,7 +613,7 @@ of this software and associated documentation files (the "Software").
 
 <div align="center">
 
-**🖥️ Desktop (EXE) → [Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)**
+**🖥️ Desktop (EXE) → [Mixture-of-Agents-Desktop](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop)**
 
 [⬆ Back to Top](#top)
 
@@ -645,7 +645,7 @@ of this software and associated documentation files (the "Software").
 
 <br>
 
-[🌐 **英文版**](#top) · [🖥️ **桌面版 (EXE)**](../../Mixture-of-Agents-Desktop) · [📦 **中文文档**](#chinese-doc)
+[🌐 **英文版**](#top) · [🖥️ **桌面版 (EXE)**](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop) · [📦 **中文文档**](#chinese-doc)
 
 ---
 
@@ -922,7 +922,7 @@ cd frontend && npm run dev
 
 <br>
 
-> 👉 参见 **[Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)** 下载或构建说明。
+> 👉 参见 **[Mixture-of-Agents-Desktop](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop)** 下载或构建说明。
 
 </details>
 
@@ -1196,7 +1196,7 @@ cd Mixture-of-Agents-Desktop && npm run build:all && npx electron-builder --win 
 
 <div align="center">
 
-**🖥️ 桌面版 → [Mixture-of-Agents-Desktop](../../Mixture-of-Agents-Desktop)**
+**🖥️ 桌面版 → [Mixture-of-Agents-Desktop](https://github.com/bauerelizabeth07139/Mixture-of-Agents-Desktop)**
 
 [⬆ 返回顶部](#top)
 
