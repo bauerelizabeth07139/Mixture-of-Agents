@@ -240,5 +240,247 @@
     "isLocal": false,
     "createdAt": "2026-07-15T08:13:50.370Z",
     "modelsEndpoint": "/models"
+  },
+  {
+    "id": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+    "name": "MiMo (小米)",
+    "baseUrl": "https://api.xiaomimimo.com/v1",
+    "type": "openai-compatible",
+    "icon": "📱",
+    "apiKeys": [
+      {
+        "id": "key-1784202077483-d1vwh0",
+        "key": "sk-svri15ibu9ce2ko5duwxm7ml88jxtwnke89zlahnco62mdxr",
+        "isActive": true,
+        "remainingQuota": 1,
+        "failureCount": 0,
+        "lastChecked": "2026-07-16T11:41:17.483Z",
+        "concurrentRequests": 0
+      },
+      {
+        "id": "key-1784202077531-ophi0y",
+        "key": "sk-swp7fwol9gbxpyf4g8y4z5d4gr89wsukneifazvlmfdros2m",
+        "isActive": true,
+        "remainingQuota": 1,
+        "failureCount": 0,
+        "lastChecked": "2026-07-16T11:41:17.531Z",
+        "concurrentRequests": 0
+      },
+      {
+        "id": "key-1784202077534-qoelba",
+        "key": "sk-slei6nu7d76mdpbbp3aruuai3s67ra1311tuo95terpx6uqm",
+        "isActive": true,
+        "remainingQuota": 1,
+        "failureCount": 0,
+        "lastChecked": "2026-07-16T11:41:17.534Z",
+        "concurrentRequests": 0
+      }
+    ],
+    "models": [
+      {
+        "id": "ef6dac90-b88e-42b8-b262-edd8e6df6e95",
+        "name": "mimo-v2.5",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5",
+        "type": "llm",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": true,
+          "visionScore": 8,
+          "audioScore": 8,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        },
+        "tags": [
+          "音频"
+        ]
+      },
+      {
+        "id": "5d4a5c95-fa07-4eea-9414-985d592e8e8d",
+        "name": "mimo-v2.5-pro",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5-pro",
+        "type": "llm",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "cbffdec4-004b-41df-9873-bf21a64d8ebf",
+        "name": "mimo-v2-flash",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2-flash",
+        "type": "llm",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "b8f3b19f-856f-40a6-ae56-74c2ed9e7f88",
+        "name": "mimo-v2-pro",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2-pro",
+        "type": "llm",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "6025622a-e8c1-443c-b88b-07501cb88265",
+        "name": "mimo-v2-omni",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2-omni",
+        "type": "llm",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "3ce94c90-689b-44e0-89b8-9c9b2e0dc672",
+        "name": "mimo-v2.5-tts",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5-tts",
+        "type": "tts",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "f5836e11-ec8e-41c7-9de5-db0dc447bc6b",
+        "name": "mimo-v2.5-asr",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5-asr",
+        "type": "stt",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "6d55e6df-1224-43bb-9e08-29c428a58ca3",
+        "name": "mimo-v2.5-tts-voiceclone",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5-tts-voiceclone",
+        "type": "tts",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      },
+      {
+        "id": "b55993f6-f015-4eb4-a3c1-eea4e61584c3",
+        "name": "mimo-v2.5-tts-voicedesign",
+        "providerId": "ceadd3bb-8848-418b-bb7d-9027ef335de6",
+        "modelId": "mimo-v2.5-tts-voicedesign",
+        "type": "tts",
+        "capabilities": {
+          "code": 5,
+          "agent": 5,
+          "chat": 5,
+          "context": 5,
+          "speed": 5,
+          "multimodal": false,
+          "visionScore": 0,
+          "audioScore": 0,
+          "pricing": {
+            "inputPer1M": 1,
+            "outputPer1M": 2,
+            "userEditable": true
+          }
+        }
+      }
+    ],
+    "isLocal": false,
+    "createdAt": "2026-07-16T11:41:08.747Z",
+    "modelsEndpoint": "/models"
   }
 ]
